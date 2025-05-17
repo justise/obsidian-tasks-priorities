@@ -56,7 +56,6 @@
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
 	overflow: hidden;
-	background-color: pink;
 }
 
 .task-priority-section-header {

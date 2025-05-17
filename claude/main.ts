@@ -143,8 +143,8 @@ export default class TaskPriorityPlugin extends Plugin {
 		)[0];
 
 		if (!leaf) {
-			// Create a new leaf in the right sidebar
-			leaf = workspace.getRightLeaf(false);
+			// Create a new leaf in the main workspace (center)
+			leaf = workspace.getLeaf(true); // true = main workspace
 			if (leaf) {
 				await leaf.setViewState({
 					type: VIEW_TYPE_TASK_PRIORITY,
@@ -239,7 +239,7 @@ export default class TaskPriorityPlugin extends Plugin {
 	async updateTaskPriority(
 		task: TaskItem,
 		newPriority: string
-	): Promise<void> {
+	): Promise<string> {
 		const content = await this.app.vault.read(task.file);
 		const lines = content.split("\n");
 
@@ -249,6 +249,8 @@ export default class TaskPriorityPlugin extends Plugin {
 
 		// Show a notification
 		new Notice(`Updated priority to ${newPriority} in ${task.file.path}`);
+
+		return Promise.resolve(lines[task.line]);
 	}
 }
 
@@ -296,6 +298,7 @@ class TaskPriorityView extends ItemView {
 	async refreshTasks(): Promise<void> {
 		//this.tasks = await this.plugin.findTasksWithPriorities();
 		this.tasks = await this.plugin.findTasksWithPrioritiesUsingDataview();
+		console.log("refresh tasks:", this.tasks);
 		// Sort tasks by priority
 		this.tasks.sort((a, b) => a.priority.localeCompare(b.priority));
 		this.renderView();
@@ -366,38 +369,46 @@ class TaskPriorityView extends ItemView {
 			tasksByPriority[task.priority].push(task);
 		});
 
-		// Create sections for each priority
-		Object.keys(tasksByPriority)
-			.sort()
-			.forEach((priority) => {
-				const prioritySection = taskList.createEl("div", {
-					cls: "task-priority-section",
-					attr: { "data-priority": priority },
-				});
+		// Define the desired order
+		const priorityOrder = [
+			"Highest",
+			"High",
+			"Medium",
+			"Normal",
+			"Low",
+			"Lowest",
+		];
 
-				const priorityHeader = prioritySection.createEl("div", {
-					cls: "task-priority-section-header",
-					text: `Priority ${priority} (${tasksByPriority[priority].length})`,
-				});
-
-				// Make the header draggable for bulk priority change
-				priorityHeader.setAttribute("draggable", "true");
-				priorityHeader.addEventListener("dragstart", (e) => {
-					e.dataTransfer?.setData("text/plain", priority);
-					this.draggedItem = priorityHeader;
-				});
-
-				// Create container for tasks in this priority
-				const tasksContainer = prioritySection.createEl("div", {
-					cls: "task-priority-items",
-				});
-
-				// Add each task
-				tasksByPriority[priority].forEach((task) => {
-					const taskEl = this.createTaskElement(task, tasksContainer);
-					tasksContainer.appendChild(taskEl);
-				});
+		// Create sections for each priority in the desired order
+		priorityOrder.forEach((priority) => {
+			const prioritySection = taskList.createEl("div", {
+				cls: "task-priority-section",
+				attr: { "data-priority": priority },
 			});
+
+			const priorityHeader = prioritySection.createEl("div", {
+				cls: "task-priority-section-header",
+				text: `Priority ${priority} (${tasksByPriority[priority].length})`,
+			});
+
+			// Make the header draggable for bulk priority change
+			priorityHeader.setAttribute("draggable", "true");
+			priorityHeader.addEventListener("dragstart", (e) => {
+				e.dataTransfer?.setData("text/plain", priority);
+				this.draggedItem = priorityHeader;
+			});
+
+			// Create container for tasks in this priority
+			const tasksContainer = prioritySection.createEl("div", {
+				cls: "task-priority-items",
+			});
+
+			// Add each task
+			tasksByPriority[priority].forEach((task) => {
+				const taskEl = this.createTaskElement(task, tasksContainer);
+				tasksContainer.appendChild(taskEl);
+			});
+		});
 
 		// Set up drop zones
 		this.setupDropZones(taskList);
@@ -505,8 +516,6 @@ class TaskPriorityView extends ItemView {
 								targetPriority
 							);
 						}
-
-						await this.refreshTasks();
 					}
 				} else {
 					// Single task move
@@ -516,11 +525,24 @@ class TaskPriorityView extends ItemView {
 						const task = this.tasks[taskData.taskIndex];
 
 						if (task && task.priority !== targetPriority) {
-							await this.plugin.updateTaskPriority(
-								task,
-								targetPriority
-							);
-							await this.refreshTasks();
+							const updatedTaskText =
+								await this.plugin.updateTaskPriority(
+									task,
+									targetPriority
+								);
+							const newTask = {
+								...task,
+								priority: targetPriority,
+								text: updatedTaskText.replace(
+									/\s*[-]\s*\[([x ])\]\s*/,
+									""
+								),
+							};
+							this.tasks[taskData.taskIndex] = newTask;
+
+							// Update the task's priority in the tasks array
+							// Update the task element in the UI
+							await this.renderView();
 						}
 					}
 				}

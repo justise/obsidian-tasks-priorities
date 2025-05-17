@@ -42,6 +42,7 @@ const context = await esbuild.context({
 	minify: prod,
 	plugins: [
 		copy({
+			watch: true,
 			assets: [
 				{
 					from: "claude/styles.css",

@@ -28,6 +28,7 @@ interface TaskPriorityPluginSettings {
 	priorityRegex: string;
 	defaultSort: "priority" | "file" | "text";
 	refreshInterval: number;
+	openFullPage: boolean; // Add this line
 }
 
 enum TaskPriority {
@@ -43,6 +44,7 @@ const DEFAULT_SETTINGS: TaskPriorityPluginSettings = {
 	priorityRegex: "\\[([A-Z])\\]",
 	defaultSort: "priority",
 	refreshInterval: 30,
+	openFullPage: true,
 };
 
 const getTaskPriority = (line: string): TaskPriority => {
@@ -137,14 +139,17 @@ export default class TaskPriorityPlugin extends Plugin {
 	async activateView() {
 		const { workspace } = this.app;
 
-		// Check if view is already open
 		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(
 			VIEW_TYPE_TASK_PRIORITY
 		)[0];
 
 		if (!leaf) {
-			// Create a new leaf in the main workspace (center)
-			leaf = workspace.getLeaf(true); // true = main workspace
+			// Use the setting to determine where to open the view
+			if (this.settings.openFullPage) {
+				leaf = workspace.getLeaf(true); // main workspace (center)
+			} else {
+				leaf = workspace.getRightLeaf(false); // right sidebar
+			}
 			if (leaf) {
 				await leaf.setViewState({
 					type: VIEW_TYPE_TASK_PRIORITY,
@@ -153,7 +158,6 @@ export default class TaskPriorityPlugin extends Plugin {
 			}
 		}
 
-		// Reveal the leaf
 		if (leaf) {
 			workspace.revealLeaf(leaf);
 		}
@@ -627,6 +631,20 @@ class TaskPrioritySettingTab extends PluginSettingTab {
 					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.refreshInterval = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Open View Full Size")
+			.setDesc(
+				"Open the Task Priority view as a full page (center) or in the right sidebar"
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.openFullPage)
+					.onChange(async (value) => {
+						this.plugin.settings.openFullPage = value;
 						await this.plugin.saveSettings();
 					})
 			);

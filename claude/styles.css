@@ -54,6 +54,7 @@
 
 .task-priority-section {
 	border: 1px solid var(--background-modifier-border);
+	background-color: var(--background-primary);
 	border-radius: 6px;
 	overflow: hidden;
 }
@@ -64,6 +65,7 @@
 	font-weight: bold;
 	cursor: move;
 	user-select: none;
+	cursor: grab;
 }
 
 .task-priority-items {
@@ -130,31 +132,44 @@
 .task-priority-drop-target {
 	box-shadow: 0 0 0 2px var(--interactive-accent);
 }
-
-/* Priority colors - customize based on your priorities */
-.task-priority-section[data-priority="A"] .task-priority-section-header,
-.task-priority-item[data-priority="A"] .task-priority-badge {
-	background-color: #e53935;
-}
-
-.task-priority-section[data-priority="B"] .task-priority-section-header,
-.task-priority-item[data-priority="B"] .task-priority-badge {
-	background-color: #fb8c00;
-}
-
-.task-priority-section[data-priority="C"] .task-priority-section-header,
-.task-priority-item[data-priority="C"] .task-priority-badge {
-	background-color: #ffb300;
-}
-
-.task-priority-section[data-priority="D"] .task-priority-section-header,
-.task-priority-item[data-priority="D"] .task-priority-badge {
-	background-color: #43a047;
-}
-
-.task-priority-section[data-priority="E"] .task-priority-section-header,
-.task-priority-item[data-priority="E"] .task-priority-badge {
-	background-color: #1e88e5;
-}
-
 /* Add more priority colors as needed */
+
+/* Dot matrix background - adaptable to light/dark mode */
+.task-priority-dot-matrix-bg {
+	background-color: var(--dot-bg) !important;
+	background-image: radial-gradient(var(--dot-color) 1px, transparent 1px),
+		radial-gradient(var(--dot-color) 1px, transparent 1px);
+	background-size: 20px 20px;
+	background-position: 0 0, 10px 10px;
+	min-height: 100vh;
+}
+
+.theme-light .task-priority-dot-matrix-bg {
+	--dot-color: rgba(28, 28, 28, 0.1);
+	--dot-bg: var(--background-primary);
+}
+
+.theme-dark .task-priority-dot-matrix-bg {
+	--dot-color: rgba(255, 255, 255, 0.07);
+	--dot-bg: #23272a;
+}
+
+/* Highest section full width */
+.task-priority-section-highest {
+	width: 100%;
+	margin-bottom: 1.5em;
+}
+
+/* Columns for other priorities */
+.task-priority-columns {
+	display: flex;
+	gap: 1em;
+	justify-content: stretch;
+}
+
+.task-priority-columns .task-priority-section {
+	flex: 1 1 0;
+	border-radius: 8px;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+	min-width: 180px;
+}

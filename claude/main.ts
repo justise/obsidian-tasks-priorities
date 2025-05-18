@@ -282,9 +282,10 @@ class TaskPriorityView extends ItemView {
 		await this.refreshTasks();
 
 		// Set up interval to refresh tasks
-		this.refreshInterval = window.setInterval(() => {
-			this.refreshTasks();
-		}, this.plugin.settings.refreshInterval * 1000);
+		// Temp while debugging styling
+		// this.refreshInterval = window.setInterval(() => {
+		// 	this.refreshTasks();
+		// }, this.plugin.settings.refreshInterval * 1000);
 	}
 
 	async onClose() {
@@ -313,6 +314,9 @@ class TaskPriorityView extends ItemView {
 		const container = this.containerEl.children[1];
 		container.empty();
 		container.addClass("task-priority-container");
+
+		// Dot matrix background
+		container.addClass("task-priority-dot-matrix-bg");
 
 		// Create header
 		const header = container.createEl("div", {
@@ -373,48 +377,57 @@ class TaskPriorityView extends ItemView {
 			tasksByPriority[task.priority].push(task);
 		});
 
-		// Define the desired order
-		const priorityOrder = [
-			"Highest",
-			"High",
-			"Medium",
-			"Normal",
-			"Low",
-			"Lowest",
-		];
+		// Render "Highest" section at the top
+		const highestSection = taskList.createEl("div", {
+			cls: "task-priority-section task-priority-section-highest",
+			attr: { "data-priority": "Highest" },
+		});
+		const highestHeader = highestSection.createEl("div", {
+			cls: "task-priority-section-header",
+			text: `Priority Highest (${tasksByPriority["Highest"].length})`,
+		});
+		highestHeader.setAttribute("draggable", "true");
+		highestHeader.addEventListener("dragstart", (e) => {
+			e.dataTransfer?.setData("text/plain", "Highest");
+			this.draggedItem = highestHeader;
+		});
+		const highestTasksContainer = highestSection.createEl("div", {
+			cls: "task-priority-items",
+		});
+		tasksByPriority["Highest"].forEach((task) => {
+			const taskEl = this.createTaskElement(task, highestTasksContainer);
+			highestTasksContainer.appendChild(taskEl);
+		});
 
-		// Create sections for each priority in the desired order
-		priorityOrder.forEach((priority) => {
-			const prioritySection = taskList.createEl("div", {
-				cls: "task-priority-section",
+		// Render other priorities in horizontal columns
+		const columnWrapper = taskList.createEl("div", {
+			cls: "task-priority-columns",
+		});
+		const columnOrder = ["High", "Medium", "Normal", "Low", "Lowest"];
+		columnOrder.forEach((priority) => {
+			const section = columnWrapper.createEl("div", {
+				cls: `task-priority-section task-priority-section-${priority.toLowerCase()}`,
 				attr: { "data-priority": priority },
 			});
-
-			const priorityHeader = prioritySection.createEl("div", {
+			const header = section.createEl("div", {
 				cls: "task-priority-section-header",
 				text: `Priority ${priority} (${tasksByPriority[priority].length})`,
 			});
-
-			// Make the header draggable for bulk priority change
-			priorityHeader.setAttribute("draggable", "true");
-			priorityHeader.addEventListener("dragstart", (e) => {
+			header.setAttribute("draggable", "true");
+			header.addEventListener("dragstart", (e) => {
 				e.dataTransfer?.setData("text/plain", priority);
-				this.draggedItem = priorityHeader;
+				this.draggedItem = header;
 			});
-
-			// Create container for tasks in this priority
-			const tasksContainer = prioritySection.createEl("div", {
+			const tasksContainer = section.createEl("div", {
 				cls: "task-priority-items",
 			});
-
-			// Add each task
 			tasksByPriority[priority].forEach((task) => {
 				const taskEl = this.createTaskElement(task, tasksContainer);
 				tasksContainer.appendChild(taskEl);
 			});
 		});
 
-		// Set up drop zones
+		// Set up drop zones for all sections
 		this.setupDropZones(taskList);
 	}
 

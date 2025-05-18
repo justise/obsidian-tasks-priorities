@@ -19,6 +19,17 @@
 	font-size: 18px;
 }
 
+.task-priority-actions {
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.task-priority-actions > *:not(:last-child) {
+	border-right: 1px solid var(--background-modifier-border);
+	padding-right: 1rem;
+}
+
 .task-priority-refresh-btn {
 	background-color: var(--interactive-accent);
 	color: var(--text-on-accent);
@@ -34,7 +45,6 @@
 }
 
 .task-priority-sorting {
-	margin-bottom: 15px;
 }
 
 .task-priority-sorting select {
@@ -165,11 +175,11 @@
 	display: flex;
 	gap: 1em;
 	justify-content: stretch;
+	flex-direction: row-reverse;
 }
 
 .task-priority-columns .task-priority-section {
 	flex: 1 1 0;
 	border-radius: 8px;
-	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 	min-width: 180px;
 }

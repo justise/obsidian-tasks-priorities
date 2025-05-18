@@ -21,12 +21,12 @@ interface TaskItem {
 	priority: string;
 	originalText: string;
 	completed: boolean;
+	date?: Date;
 }
 
 // Define default settings
 interface TaskPriorityPluginSettings {
-	priorityRegex: string;
-	defaultSort: "priority" | "file" | "text";
+	defaultSort: "date" | "file" | "text";
 	refreshInterval: number;
 	openFullPage: boolean; // Add this line
 }
@@ -41,8 +41,7 @@ enum TaskPriority {
 }
 
 const DEFAULT_SETTINGS: TaskPriorityPluginSettings = {
-	priorityRegex: "\\[([A-Z])\\]",
-	defaultSort: "priority",
+	defaultSort: "date",
 	refreshInterval: 30,
 	openFullPage: true,
 };
@@ -185,6 +184,7 @@ export default class TaskPriorityPlugin extends Plugin {
 						priority: getTaskPriority(item.text),
 						originalText: item.text,
 						completed: item.completed,
+						date: item.due ? new Date(item.due) : undefined, // Use the correct property for your tasks
 					} as TaskItem;
 				})
 				.filter((task: TaskItem) => task.file instanceof TFile);
@@ -192,52 +192,6 @@ export default class TaskPriorityPlugin extends Plugin {
 			return [];
 		}
 	}
-
-	// Function to find all tasks with priorities in the vault
-	// async findTasksWithPriorities(): Promise<TaskItem[]> {
-	// 	const files = this.app.vault.getMarkdownFiles();
-	// 	const priorityRegex = new RegExp(this.settings.priorityRegex);
-	// 	const tasks: TaskItem[] = [];
-
-	// 	for (const file of files) {
-	// 		const content = await this.app.vault.read(file);
-	// 		const lines = content.split("\n");
-
-	// 		for (let i = 0; i < lines.length; i++) {
-	// 			const line = lines[i];
-	// 			// Check if line contains a task marker and a priority
-	// 			if (line.includes("- [ ]") || line.includes("- [x]")) {
-	// 				const priorityMatch = line.match(priorityRegex);
-	// 				if (priorityMatch) {
-	// 					const completed = line.includes("- [x]");
-	// 					tasks.push({
-	// 						file: file,
-	// 						line: i,
-	// 						text: line
-	// 							.replace(/^[\s-]*\[[x ]\]\s*/, "")
-	// 							.replace(priorityRegex, "")
-	// 							.trim(),
-	// 						priority: priorityMatch[1],
-	// 						originalText: line,
-	// 						completed,
-	// 					});
-	// 				} else {
-	// 					const completed = line.includes("- [x]");
-	// 					tasks.push({
-	// 						file: file,
-	// 						line: i,
-	// 						text: line.replace(/^[\s-]*\[[x ]\]\s*/, "").trim(),
-	// 						priority: "Normal",
-	// 						originalText: line,
-	// 						completed,
-	// 					});
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-
-	// 	return tasks;
-	// }
 
 	// Update a task's priority in its file
 	async updateTaskPriority(
@@ -252,7 +206,7 @@ export default class TaskPriorityPlugin extends Plugin {
 		await this.app.vault.modify(task.file, lines.join("\n"));
 
 		// Show a notification
-		new Notice(`Updated priority to ${newPriority} in ${task.file.path}`);
+		// new Notice(`Updated priority to ${newPriority} in ${task.file.path}`);
 
 		return Promise.resolve(lines[task.line]);
 	}
@@ -264,10 +218,12 @@ class TaskPriorityView extends ItemView {
 	tasks: TaskItem[] = [];
 	draggedItem: HTMLElement | null = null;
 	refreshInterval: number | null = null;
+	sortBy: "date" | "file" | "text" = "date";
 
 	constructor(leaf: WorkspaceLeaf, plugin: TaskPriorityPlugin) {
 		super(leaf);
 		this.plugin = plugin;
+		this.sortBy = plugin.settings.defaultSort;
 	}
 
 	getViewType(): string {
@@ -324,20 +280,17 @@ class TaskPriorityView extends ItemView {
 		});
 		header.createEl("h2", { text: "Tasks by Priority" });
 
-		// Create refresh button
-		const refreshBtn = header.createEl("button", {
-			cls: "task-priority-refresh-btn",
-			text: "Refresh",
+		const actionsDiv = header.createEl("div", {
+			cls: "task-priority-actions",
 		});
-		refreshBtn.addEventListener("click", () => this.refreshTasks());
 
 		// Create sorting options
-		const sortingDiv = container.createEl("div", {
+		const sortingDiv = actionsDiv.createEl("div", {
 			cls: "task-priority-sorting",
 		});
 		sortingDiv.createEl("span", { text: "Sort by: " });
 
-		const sortOptions = ["priority", "file", "text"];
+		const sortOptions = ["date", "file", "text"];
 		const sortSelect = sortingDiv.createEl("select");
 
 		sortOptions.forEach((option) => {
@@ -345,15 +298,24 @@ class TaskPriorityView extends ItemView {
 				text: option.charAt(0).toUpperCase() + option.slice(1),
 				value: option,
 			});
-			if (option === this.plugin.settings.defaultSort) {
+			if (option === this.sortBy) {
 				optEl.selected = true;
 			}
 		});
 
 		sortSelect.addEventListener("change", (e) => {
 			const target = e.target as HTMLSelectElement;
-			this.sortTasks(target.value as "priority" | "file" | "text");
+			const sortValue = target.value as "date" | "file" | "text";
+			this.sortBy = sortValue;
+			this.sortTasks(sortValue);
 		});
+
+		// Create refresh button
+		const refreshBtn = actionsDiv.createEl("button", {
+			cls: "task-priority-refresh-btn",
+			text: "Refresh",
+		});
+		refreshBtn.addEventListener("click", () => this.refreshTasks());
 
 		// Create task list
 		const taskList = container.createEl("div", {
@@ -570,10 +532,15 @@ class TaskPriorityView extends ItemView {
 	}
 
 	// Sort tasks by the specified criteria
-	sortTasks(sortBy: "priority" | "file" | "text"): void {
+	sortTasks(sortBy: "date" | "file" | "text"): void {
 		switch (sortBy) {
-			case "priority":
-				this.tasks.sort((a, b) => a.priority.localeCompare(b.priority));
+			case "date":
+				this.tasks.sort((a, b) => {
+					if (!a.date && !b.date) return 0;
+					if (!a.date) return 1;
+					if (!b.date) return -1;
+					return a.date.getTime() - b.date.getTime();
+				});
 				break;
 			case "file":
 				this.tasks.sort((a, b) =>
@@ -605,30 +572,15 @@ class TaskPrioritySettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Task Priority Plugin Settings" });
 
 		new Setting(containerEl)
-			.setName("Priority Regular Expression")
-			.setDesc(
-				"Regular expression to match priorities. Default matches [A], [B], etc."
-			)
-			.addText((text) =>
-				text
-					.setPlaceholder("\\[([A-Z])\\]")
-					.setValue(this.plugin.settings.priorityRegex)
-					.onChange(async (value) => {
-						this.plugin.settings.priorityRegex = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
 			.setName("Default Sort")
 			.setDesc("How to sort tasks by default")
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption("priority", "Priority")
+					.addOption("date", "Date")
 					.addOption("file", "File name")
 					.addOption("text", "Task text")
 					.setValue(this.plugin.settings.defaultSort)
-					.onChange(async (value: "priority" | "file" | "text") => {
+					.onChange(async (value: "date" | "file" | "text") => {
 						this.plugin.settings.defaultSort = value;
 						await this.plugin.saveSettings();
 					})

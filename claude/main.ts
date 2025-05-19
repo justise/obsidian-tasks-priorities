@@ -28,7 +28,8 @@ interface TaskItem {
 interface TaskPriorityPluginSettings {
 	defaultSort: "date" | "file" | "text";
 	refreshInterval: number;
-	openFullPage: boolean; // Add this line
+	openFullPage: boolean;
+	taskQuery: string; // Add this line
 }
 
 enum TaskPriority {
@@ -44,6 +45,7 @@ const DEFAULT_SETTINGS: TaskPriorityPluginSettings = {
 	defaultSort: "date",
 	refreshInterval: 30,
 	openFullPage: true,
+	taskQuery: "TASK WHERE !completed AND !checked", // Add this line
 };
 
 const getTaskPriority = (line: string): TaskPriority => {
@@ -114,13 +116,9 @@ export default class TaskPriorityPlugin extends Plugin {
 
 		// Add settings tab
 		this.addSettingTab(new TaskPrioritySettingTab(this.app, this));
-
-		console.log("Task Priority Plugin loaded");
 	}
 
-	onunload() {
-		console.log("Task Priority Plugin unloaded");
-	}
+	onunload() {}
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -164,12 +162,14 @@ export default class TaskPriorityPlugin extends Plugin {
 
 	async findTasksWithPrioritiesUsingDataview(): Promise<TaskItem[]> {
 		//@ts-ignore
-		const dataviewApi = this.app.plugins.plugins.dataview.api;
+		const dataviewApi = this.app.plugins.plugins.dataview?.api;
 		if (!dataviewApi) {
-			new Notice("Dataview plugin is not enabled.");
+			new Notice(
+				"The Dataview plugin is required for Task Priorities. Please install and enable the Dataview plugin."
+			);
 			return [];
 		}
-		const query = "TASK WHERE !completed AND !checked"; // where not done
+		const query = this.settings.taskQuery; // Use setting
 		const results = await dataviewApi.query(query);
 		if (results.successful) {
 			return results.value.values
@@ -257,11 +257,10 @@ class TaskPriorityView extends ItemView {
 
 	// Method to refresh task data
 	async refreshTasks(): Promise<void> {
-		//this.tasks = await this.plugin.findTasksWithPriorities();
 		this.tasks = await this.plugin.findTasksWithPrioritiesUsingDataview();
-		console.log("refresh tasks:", this.tasks);
+
 		// Sort tasks by priority
-		this.tasks.sort((a, b) => a.priority.localeCompare(b.priority));
+		this.sortTasks(this.sortBy);
 		this.renderView();
 	}
 
@@ -428,12 +427,6 @@ class TaskPriorityView extends ItemView {
 					}
 				});
 		});
-
-		// Priority badge
-		// const priorityBadge = taskEl.createEl("div", {
-		// 	cls: "task-priority-badge",
-		// 	text: task.priority,
-		// });
 
 		// Set up drag events
 		taskEl.addEventListener("dragstart", (e) => {
@@ -610,6 +603,20 @@ class TaskPrioritySettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.openFullPage)
 					.onChange(async (value) => {
 						this.plugin.settings.openFullPage = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Task Query")
+			.setDesc(
+				"Dataview query to find tasks (e.g. TASK WHERE !completed AND !checked)"
+			)
+			.addTextArea((text) =>
+				text
+					.setValue(this.plugin.settings.taskQuery)
+					.onChange(async (value) => {
+						this.plugin.settings.taskQuery = value;
 						await this.plugin.saveSettings();
 					})
 			);

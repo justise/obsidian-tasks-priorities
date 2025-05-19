@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
+	"id": "obsidian-tasks-prioritizer",
 	"name": "Task Prioritizer",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "TODO: Write a short description of your plugin",
+	"description": "A plugin for kanban style prioritization of tasks in Obsidian",
 	"author": "Kris Gray",
 	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }

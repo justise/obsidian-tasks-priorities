@@ -1,5 +1,7 @@
 # Obsidian Task Prioritizer Plugin
 
+![Preview of the Plugin](preview.png)
+
 A plugin for Obsidian that helps you view, sort, and manage your tasks by priority, leveraging the Dataview and Tasks plugins for advanced task management.
 
 ## Features

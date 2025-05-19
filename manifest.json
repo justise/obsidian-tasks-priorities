@@ -2,8 +2,8 @@
 	"id": "obsidian-tasks-prioritizer",
 	"name": "Task Prioritizer",
 	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "A plugin for kanban style prioritization of tasks in Obsidian",
+	"minAppVersion": "1.8.9",
+	"description": "Kanban style prioritization of tasks in Obsidian with Drag and Drop support.",
 	"author": "Kris Gray",
 	"authorUrl": "https://obsidian.md",
 	"isDesktopOnly": true

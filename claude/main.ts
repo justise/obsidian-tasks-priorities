@@ -612,13 +612,16 @@ class TaskPrioritySettingTab extends PluginSettingTab {
 			.setDesc(
 				"Dataview query to find tasks (e.g. TASK WHERE !completed AND !checked)"
 			)
-			.addTextArea((text) =>
-				text
+			.addTextArea((text) => {
+				text.inputEl.style.minHeight = "150px";
+				text.inputEl.style.minWidth = "300px";
+				return text
 					.setValue(this.plugin.settings.taskQuery)
+					.setPlaceholder("TASK WHERE !completed AND !checked")
 					.onChange(async (value) => {
 						this.plugin.settings.taskQuery = value;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
 	}
 }

@@ -1,15 +1,19 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
-	"main": "build/main.js",
+	"name": "tasks-prioritizer",
+	"version": "1.0.1",
+	"description": "Kanban style prioritization of tasks in Obsidian with Drag and Drop support.",
+	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": [],
-	"author": "",
+	"keywords": [
+		"Tasks",
+		"Obsidian",
+		"Plugin"
+	],
+	"author": "https://github.com/justise",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",

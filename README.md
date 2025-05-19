@@ -25,7 +25,7 @@ A plugin for Obsidian that helps you view, sort, and manage your tasks by priori
 
 1. Install the Dataview plugin from the Obsidian community plugins directory.
 2. (Optional) Install the Tasks plugin for advanced task editing.
-3. Copy `main.js`, `styles.css`, and `manifest.json` to your vault's `.obsidian/plugins/obsidian-tasks-priorities/` folder.
+3. Copy `main.js`, `styles.css`, and `manifest.json` to your vault's `.obsidian/plugins/tasks-prioritizer/` folder.
 4. Enable the plugin in Obsidian settings.
 5. Use the ribbon icon or command palette to open the Task Priorities view.
 

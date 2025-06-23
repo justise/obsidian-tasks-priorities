@@ -1,5 +1,13 @@
 /* Task Priority Plugin Styles */
 
+.task-priority-container,
+.task-priority-dot-matrix-bg {
+	min-height: 100vh;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
 .task-priority-container {
 	padding: 10px;
 	font-size: 14px;
@@ -57,9 +65,11 @@
 }
 
 .task-priority-list {
+	flex: 1 1 0;
 	display: flex;
 	flex-direction: column;
 	gap: 15px;
+	min-height: 0;
 }
 
 .task-priority-section {
@@ -67,6 +77,10 @@
 	background-color: var(--background-primary);
 	border-radius: 6px;
 	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 0;
+	min-height: 0; /* allow shrinking for scroll */
 }
 
 .task-priority-section-header {
@@ -81,6 +95,10 @@
 .task-priority-items {
 	display: flex;
 	flex-direction: column;
+	flex: 1 1 0;
+	height: 100%;
+	overflow-y: auto;
+	min-height: 0; /* allow shrinking for scroll */
 }
 
 .task-priority-item {
@@ -167,7 +185,8 @@
 /* Highest section full width */
 .task-priority-section-highest {
 	width: 100%;
-	margin-bottom: 1.5em;
+	min-height: 20%;
+	max-height: 35%;
 }
 
 /* Columns for other priorities */
@@ -176,6 +195,11 @@
 	gap: 1em;
 	justify-content: stretch;
 	flex-direction: row-reverse;
+	flex: 1 1 0;
+	min-height: 0;
+	max-height: 100%;
+	/* Prevent overflow */
+	margin-bottom: 50px;
 }
 
 .task-priority-columns .task-priority-section {

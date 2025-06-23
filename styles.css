@@ -185,7 +185,6 @@
 /* Highest section full width */
 .task-priority-section-highest {
 	width: 100%;
-	margin-bottom: 1.5em;
 	min-height: 20%;
 	max-height: 35%;
 }
@@ -200,6 +199,7 @@
 	min-height: 0;
 	max-height: 100%;
 	/* Prevent overflow */
+	margin-bottom: 50px;
 }
 
 .task-priority-columns .task-priority-section {

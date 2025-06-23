@@ -174,9 +174,7 @@ export default class TaskPriorityPlugin extends Plugin {
 		if (results.successful) {
 			return results.value.values
 				.map((item: any) => {
-					const tfile = this.app.vault.getAbstractFileByPath(
-						item.file.path
-					);
+					const tfile = this.app.vault.getFileByPath(item.file.path);
 					return {
 						file: tfile, // This will be a TFile or null
 						line: item.line,
@@ -198,17 +196,25 @@ export default class TaskPriorityPlugin extends Plugin {
 		task: TaskItem,
 		newPriority: string
 	): Promise<string> {
-		const content = await this.app.vault.read(task.file);
-		const lines = content.split("\n");
+		const updated_file = await this.app.vault.process(task.file, (data) => {
+			const lines = data.split("\n");
+			lines[task.line] = setTaskPriorityInLine(
+				lines[task.line],
+				newPriority
+			);
+			return lines.join("\n");
+		});
 
-		// Update the line in the file
-		lines[task.line] = setTaskPriorityInLine(lines[task.line], newPriority);
-		await this.app.vault.modify(task.file, lines.join("\n"));
+		// const lines = content.split("\n");
+
+		// // Update the line in the file
+		// lines[task.line] = setTaskPriorityInLine(lines[task.line], newPriority);
+		// await this.app.vault.modify(task.file, lines.join("\n"));
 
 		// Show a notification
 		// new Notice(`Updated priority to ${newPriority} in ${task.file.path}`);
 
-		return Promise.resolve(lines[task.line]);
+		return Promise.resolve(updated_file.split("\n")[task.line]);
 	}
 }
 
@@ -268,6 +274,7 @@ class TaskPriorityView extends ItemView {
 	async renderView(): Promise<void> {
 		const container = this.containerEl.children[1];
 		container.empty();
+
 		container.addClass("task-priority-container");
 
 		// Dot matrix background
@@ -345,7 +352,7 @@ class TaskPriorityView extends ItemView {
 		});
 		const highestHeader = highestSection.createEl("div", {
 			cls: "task-priority-section-header",
-			text: `Priority Highest (${tasksByPriority["Highest"].length})`,
+			text: `Priority highest (${tasksByPriority["Highest"].length})`,
 		});
 		highestHeader.setAttribute("draggable", "true");
 		highestHeader.addEventListener("dragstart", (e) => {
@@ -561,8 +568,6 @@ class TaskPrioritySettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-
-		containerEl.createEl("h2", { text: "Task Priority Plugin Settings" });
 
 		new Setting(containerEl)
 			.setName("Default Sort")

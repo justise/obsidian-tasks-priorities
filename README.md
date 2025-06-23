@@ -1,4 +1,4 @@
-# Obsidian Task Prioritizer Plugin
+# Task Prioritizer Plugin
 
 ![Preview of the Plugin](preview.png)
 

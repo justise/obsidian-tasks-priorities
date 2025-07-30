@@ -284,7 +284,7 @@ class TaskPriorityView extends ItemView {
 		const header = container.createEl("div", {
 			cls: "task-priority-header",
 		});
-		header.createEl("h2", { text: "Tasks by Priority" });
+		header.createEl("h2", { text: "Tasks by priority" });
 
 		const actionsDiv = header.createEl("div", {
 			cls: "task-priority-actions",

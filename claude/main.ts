@@ -101,14 +101,14 @@ export default class TaskPriorityPlugin extends Plugin {
 		);
 
 		// Add a plugin ribbon icon
-		this.addRibbonIcon("list-checks", "Task Priority View", () => {
+		this.addRibbonIcon("list-checks", "Task priority view", () => {
 			this.activateView();
 		});
 
 		// Add a command to open the view
 		this.addCommand({
 			id: "open-task-priority-view",
-			name: "Open Task Priority View",
+			name: "Open task priority view",
 			callback: () => {
 				this.activateView();
 			},

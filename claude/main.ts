@@ -216,6 +216,25 @@ export default class TaskPriorityPlugin extends Plugin {
 
 		return Promise.resolve(updated_file.split("\n")[task.line]);
 	}
+
+	// Update a task's completion status in its file
+	async updateTaskCompletion(task: TaskItem, completed: boolean): Promise<void> {
+		await this.app.vault.process(task.file, (data) => {
+			const lines = data.split("\n");
+			const currentLine = lines[task.line];
+			
+			// Update the task completion status
+			if (completed) {
+				// Mark as completed: change [ ] to [x]
+				lines[task.line] = currentLine.replace(/- \[ \]/, "- [x]");
+			} else {
+				// Mark as incomplete: change [x] to [ ]
+				lines[task.line] = currentLine.replace(/- \[x\]/, "- [ ]");
+			}
+			
+			return lines.join("\n");
+		});
+	}
 }
 
 // View class for displaying tasks by priority
@@ -270,8 +289,227 @@ class TaskPriorityView extends ItemView {
 		this.renderView();
 	}
 
-	// Render the view
-	async renderView(): Promise<void> {
+	// Create a task element
+	createTaskElement(task: TaskItem, container: HTMLElement): HTMLElement {
+		const taskEl = document.createElement("div");
+		taskEl.addClass("task-priority-item");
+		taskEl.setAttribute("draggable", "true");
+
+		if (task.completed) {
+			taskEl.addClass("task-completed");
+		}
+
+		// Create task content
+		const taskContent = taskEl.createEl("div", { cls: "task-content" });
+
+		// Create completion checkbox in top right
+		const completionCheckbox = taskEl.createEl("div", { 
+			cls: "task-completion-checkbox" 
+		});
+		
+		const checkboxIcon = completionCheckbox.createEl("span", {
+			cls: task.completed ? "task-checkbox-checked" : "task-checkbox-unchecked"
+		});
+		
+		checkboxIcon.innerHTML = task.completed ? "✓" : "";
+		checkboxIcon.setAttribute("title", task.completed ? "Mark as incomplete" : "Mark as complete");
+		
+		completionCheckbox.addEventListener("click", async (e) => {
+			e.stopPropagation();
+			e.preventDefault();
+			await this.toggleTaskCompletion(task, taskEl);
+		});
+
+		// Title with file info
+		const titleEl = taskContent.createEl("div", { cls: "task-title" });
+		titleEl.setText(task.text);
+
+		// File info
+		const fileInfo = taskContent.createEl("div", { cls: "task-file-info" });
+		fileInfo.setText(task.file.path);
+		fileInfo.addEventListener("click", () => {
+			// Open the file at the specific line
+			this.app.workspace
+				.getLeaf()
+				.openFile(task.file)
+				.then(() => {
+					const view =
+						this.app.workspace.getActiveViewOfType(MarkdownView);
+					if (view) {
+						const editor = view.editor;
+						editor.setCursor({ line: task.line, ch: 0 });
+						editor.focus();
+					}
+				});
+		});
+
+		// Set up drag events
+		taskEl.addEventListener("dragstart", (e) => {
+			e.dataTransfer?.setData(
+				"application/json",
+				JSON.stringify({
+					taskIndex: this.tasks.indexOf(task),
+					priority: task.priority,
+					file: task.file.path,
+					line: task.line,
+				})
+			);
+			this.draggedItem = taskEl;
+		});
+
+		return taskEl;
+	}
+
+	// Toggle task completion status
+	async toggleTaskCompletion(task: TaskItem, taskEl: HTMLElement): Promise<void> {
+		const newCompletedStatus = !task.completed;
+		
+		try {
+			// Update the task in the file
+			await this.plugin.updateTaskCompletion(task, newCompletedStatus);
+			
+			// Update the task object
+			task.completed = newCompletedStatus;
+			
+			// Update the UI element
+			const checkbox = taskEl.querySelector('.task-completion-checkbox span') as HTMLElement;
+			
+			if (newCompletedStatus) {
+				taskEl.addClass("task-completed");
+				checkbox.addClass("task-checkbox-checked");
+				checkbox.removeClass("task-checkbox-unchecked");
+				checkbox.innerHTML = "✓";
+				checkbox.setAttribute("title", "Mark as incomplete");
+			} else {
+				taskEl.removeClass("task-completed");
+				checkbox.addClass("task-checkbox-unchecked");
+				checkbox.removeClass("task-checkbox-checked");
+				checkbox.innerHTML = "";
+				checkbox.setAttribute("title", "Mark as complete");
+			}
+			
+		} catch (error) {
+			new Notice(`Failed to update task: ${error.message}`);
+			console.error('Error updating task completion:', error);
+		}
+	}
+
+	// Set up drop zones for drag and drop functionality
+	setupDropZones(container: HTMLElement): void {
+		const prioritySections = container.querySelectorAll(
+			".task-priority-section"
+		);
+
+		prioritySections.forEach((section) => {
+			// Make the section a drop target
+			section.addEventListener("dragover", (e) => {
+				e.preventDefault();
+				if (this.draggedItem) {
+					section.addClass("task-priority-drop-target");
+				}
+			});
+
+			section.addEventListener("dragleave", () => {
+				section.removeClass("task-priority-drop-target");
+			});
+
+			section.addEventListener("drop", async (e: DragEvent) => {
+				e.preventDefault();
+				section.removeClass("task-priority-drop-target");
+
+				const targetPriority = section.getAttribute("data-priority");
+
+				if (!targetPriority || !this.draggedItem) return;
+
+				// Check if dragging a priority header (bulk move) or single task
+				if (this.draggedItem.hasClass("task-priority-section-header")) {
+					const sourcePriority =
+						e.dataTransfer?.getData("text/plain");
+					if (sourcePriority && sourcePriority !== targetPriority) {
+						// Update all tasks with this priority
+						const tasksToUpdate = this.tasks.filter(
+							(t) => t.priority === sourcePriority
+						);
+
+						for (const task of tasksToUpdate) {
+							await this.plugin.updateTaskPriority(
+								task,
+								targetPriority
+							);
+						}
+					}
+				} else {
+					// Single task move
+					const data = e.dataTransfer?.getData("application/json");
+					if (data) {
+						const taskData = JSON.parse(data);
+						const task = this.tasks[taskData.taskIndex];
+
+						if (task && task.priority !== targetPriority) {
+							const updatedTaskText =
+								await this.plugin.updateTaskPriority(
+									task,
+									targetPriority
+								);
+							const newTask = {
+								...task,
+								priority: targetPriority,
+								text: updatedTaskText.replace(
+									/\s*[-]\s*\[([x ])\]\s*/,
+									""
+								),
+							};
+							this.tasks[taskData.taskIndex] = newTask;
+
+							// Update the task's priority in the tasks array
+							// Update the task element in the UI
+							await this.renderView(true);
+						}
+					}
+				}
+
+				this.draggedItem = null;
+			});
+		});
+	}
+
+	// Store scroll positions of all scrollable containers
+	storeScrollPositions(): Map<string, number> {
+		const scrollPositions = new Map<string, number>();
+		
+		// Store scroll positions for each priority section
+		const prioritySections = this.containerEl.querySelectorAll('.task-priority-items');
+		prioritySections.forEach((section, index) => {
+			const scrollableEl = section as HTMLElement;
+			scrollPositions.set(`section-${index}`, scrollableEl.scrollTop);
+		});
+		
+		return scrollPositions;
+	}
+
+	// Restore scroll positions after re-render
+	restoreScrollPositions(scrollPositions: Map<string, number>): void {
+		// Use requestAnimationFrame to ensure DOM is updated
+		requestAnimationFrame(() => {
+			const prioritySections = this.containerEl.querySelectorAll('.task-priority-items');
+			prioritySections.forEach((section, index) => {
+				const scrollableEl = section as HTMLElement;
+				const savedPosition = scrollPositions.get(`section-${index}`);
+				if (savedPosition !== undefined) {
+					scrollableEl.scrollTop = savedPosition;
+				}
+			});
+		});
+	}
+
+	// Render view with optional scroll preservation
+	async renderView(preserveScroll: boolean = false): Promise<void> {
+		let scrollPositions: Map<string, number> | null = null;
+		
+		if (preserveScroll) {
+			scrollPositions = this.storeScrollPositions();
+		}
+		
 		const container = this.containerEl.children[1];
 		container.empty();
 
@@ -397,138 +635,11 @@ class TaskPriorityView extends ItemView {
 
 		// Set up drop zones for all sections
 		this.setupDropZones(taskList);
-	}
-
-	// Create a task element
-	createTaskElement(task: TaskItem, container: HTMLElement): HTMLElement {
-		const taskEl = document.createElement("div");
-		taskEl.addClass("task-priority-item");
-		taskEl.setAttribute("draggable", "true");
-
-		if (task.completed) {
-			taskEl.addClass("task-completed");
+		
+		// Restore scroll positions if requested
+		if (preserveScroll && scrollPositions) {
+			this.restoreScrollPositions(scrollPositions);
 		}
-
-		// Create task content
-		const taskContent = taskEl.createEl("div", { cls: "task-content" });
-
-		// Title with file info
-		const titleEl = taskContent.createEl("div", { cls: "task-title" });
-		titleEl.setText(task.text);
-
-		// File info
-		const fileInfo = taskContent.createEl("div", { cls: "task-file-info" });
-		fileInfo.setText(task.file.path);
-		fileInfo.addEventListener("click", () => {
-			// Open the file at the specific line
-			this.app.workspace
-				.getLeaf()
-				.openFile(task.file)
-				.then(() => {
-					const view =
-						this.app.workspace.getActiveViewOfType(MarkdownView);
-					if (view) {
-						const editor = view.editor;
-						editor.setCursor({ line: task.line, ch: 0 });
-						editor.focus();
-					}
-				});
-		});
-
-		// Set up drag events
-		taskEl.addEventListener("dragstart", (e) => {
-			e.dataTransfer?.setData(
-				"application/json",
-				JSON.stringify({
-					taskIndex: this.tasks.indexOf(task),
-					priority: task.priority,
-					file: task.file.path,
-					line: task.line,
-				})
-			);
-			this.draggedItem = taskEl;
-		});
-
-		return taskEl;
-	}
-
-	// Set up drop zones for drag and drop functionality
-	setupDropZones(container: HTMLElement): void {
-		const prioritySections = container.querySelectorAll(
-			".task-priority-section"
-		);
-
-		prioritySections.forEach((section) => {
-			// Make the section a drop target
-			section.addEventListener("dragover", (e) => {
-				e.preventDefault();
-				if (this.draggedItem) {
-					section.addClass("task-priority-drop-target");
-				}
-			});
-
-			section.addEventListener("dragleave", () => {
-				section.removeClass("task-priority-drop-target");
-			});
-
-			section.addEventListener("drop", async (e: DragEvent) => {
-				e.preventDefault();
-				section.removeClass("task-priority-drop-target");
-
-				const targetPriority = section.getAttribute("data-priority");
-
-				if (!targetPriority || !this.draggedItem) return;
-
-				// Check if dragging a priority header (bulk move) or single task
-				if (this.draggedItem.hasClass("task-priority-section-header")) {
-					const sourcePriority =
-						e.dataTransfer?.getData("text/plain");
-					if (sourcePriority && sourcePriority !== targetPriority) {
-						// Update all tasks with this priority
-						const tasksToUpdate = this.tasks.filter(
-							(t) => t.priority === sourcePriority
-						);
-
-						for (const task of tasksToUpdate) {
-							await this.plugin.updateTaskPriority(
-								task,
-								targetPriority
-							);
-						}
-					}
-				} else {
-					// Single task move
-					const data = e.dataTransfer?.getData("application/json");
-					if (data) {
-						const taskData = JSON.parse(data);
-						const task = this.tasks[taskData.taskIndex];
-
-						if (task && task.priority !== targetPriority) {
-							const updatedTaskText =
-								await this.plugin.updateTaskPriority(
-									task,
-									targetPriority
-								);
-							const newTask = {
-								...task,
-								priority: targetPriority,
-								text: updatedTaskText.replace(
-									/\s*[-]\s*\[([x ])\]\s*/,
-									""
-								),
-							};
-							this.tasks[taskData.taskIndex] = newTask;
-
-							// Update the task's priority in the tasks array
-							// Update the task element in the UI
-							await this.renderView();
-						}
-					}
-				}
-
-				this.draggedItem = null;
-			});
-		});
 	}
 
 	// Sort tasks by the specified criteria

@@ -8,6 +8,49 @@
 	flex-direction: column;
 }
 
+/* Task completion checkbox */
+.task-completion-checkbox {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 10;
+	cursor: pointer;
+}
+
+.task-completion-checkbox span {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	border: 2px solid var(--text-muted);
+	border-radius: 3px;
+	text-align: center;
+	line-height: 14px;
+	font-size: 12px;
+	font-weight: bold;
+	transition: all 0.2s ease;
+	background: var(--background-primary);
+}
+
+.task-checkbox-unchecked {
+	border-color: var(--text-muted);
+	color: transparent;
+}
+
+.task-checkbox-unchecked:hover {
+	border-color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
+.task-checkbox-checked {
+	border-color: var(--interactive-accent);
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.task-checkbox-checked:hover {
+	background: var(--interactive-accent-hover);
+}
+
 .task-priority-container {
 	padding: 10px;
 	font-size: 14px;
@@ -109,6 +152,7 @@
 	border-top: 1px solid var(--background-modifier-border);
 	cursor: move;
 	background-color: var(--background-primary);
+	position: relative;
 }
 
 .task-priority-item:hover {
@@ -118,6 +162,7 @@
 .task-content {
 	flex: 1;
 	overflow: hidden;
+	padding-right: 30px;
 }
 
 .task-title {

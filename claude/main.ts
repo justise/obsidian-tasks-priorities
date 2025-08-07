@@ -24,6 +24,15 @@ interface TaskItem {
 	date?: Date;
 }
 
+// Interface for Dataview query result items
+interface DataviewTaskItem {
+	file: { path: string };
+	line: number;
+	text: string;
+	completed: boolean;
+	due?: string;
+}
+
 // Define default settings
 interface TaskPriorityPluginSettings {
 	defaultSort: "date" | "file" | "text";
@@ -173,7 +182,7 @@ export default class TaskPriorityPlugin extends Plugin {
 		const results = await dataviewApi.query(query);
 		if (results.successful) {
 			return results.value.values
-				.map((item: any) => {
+				.map((item: DataviewTaskItem) => {
 					const tfile = this.app.vault.getFileByPath(item.file.path);
 					return {
 						file: tfile, // This will be a TFile or null
@@ -218,11 +227,14 @@ export default class TaskPriorityPlugin extends Plugin {
 	}
 
 	// Update a task's completion status in its file
-	async updateTaskCompletion(task: TaskItem, completed: boolean): Promise<void> {
+	async updateTaskCompletion(
+		task: TaskItem,
+		completed: boolean
+	): Promise<void> {
 		await this.app.vault.process(task.file, (data) => {
 			const lines = data.split("\n");
 			const currentLine = lines[task.line];
-			
+
 			// Update the task completion status
 			if (completed) {
 				// Mark as completed: change [ ] to [x]
@@ -231,7 +243,7 @@ export default class TaskPriorityPlugin extends Plugin {
 				// Mark as incomplete: change [x] to [ ]
 				lines[task.line] = currentLine.replace(/- \[x\]/, "- [ ]");
 			}
-			
+
 			return lines.join("\n");
 		});
 	}
@@ -299,26 +311,31 @@ class TaskPriorityView extends ItemView {
 			taskEl.addClass("task-completed");
 		}
 
-		// Create task content
-		const taskContent = taskEl.createEl("div", { cls: "task-content" });
+		// Create completion checkbox on the left
+		const completionCheckbox = taskEl.createEl("div", {
+			cls: "task-completion-checkbox",
+		});
 
-		// Create completion checkbox in top right
-		const completionCheckbox = taskEl.createEl("div", { 
-			cls: "task-completion-checkbox" 
-		});
-		
 		const checkboxIcon = completionCheckbox.createEl("span", {
-			cls: task.completed ? "task-checkbox-checked" : "task-checkbox-unchecked"
+			cls: task.completed
+				? "task-checkbox-checked"
+				: "task-checkbox-unchecked",
 		});
-		
+
 		checkboxIcon.innerHTML = task.completed ? "✓" : "";
-		checkboxIcon.setAttribute("title", task.completed ? "Mark as incomplete" : "Mark as complete");
-		
+		checkboxIcon.setAttribute(
+			"title",
+			task.completed ? "Mark as incomplete" : "Mark as complete"
+		);
+
 		completionCheckbox.addEventListener("click", async (e) => {
 			e.stopPropagation();
 			e.preventDefault();
 			await this.toggleTaskCompletion(task, taskEl);
 		});
+
+		// Create task content
+		const taskContent = taskEl.createEl("div", { cls: "task-content" });
 
 		// Title with file info
 		const titleEl = taskContent.createEl("div", { cls: "task-title" });
@@ -361,36 +378,62 @@ class TaskPriorityView extends ItemView {
 	}
 
 	// Toggle task completion status
-	async toggleTaskCompletion(task: TaskItem, taskEl: HTMLElement): Promise<void> {
+	async toggleTaskCompletion(
+		task: TaskItem,
+		taskEl: HTMLElement
+	): Promise<void> {
 		const newCompletedStatus = !task.completed;
-		
+
 		try {
 			// Update the task in the file
 			await this.plugin.updateTaskCompletion(task, newCompletedStatus);
-			
+
 			// Update the task object
 			task.completed = newCompletedStatus;
-			
+
 			// Update the UI element
-			const checkbox = taskEl.querySelector('.task-completion-checkbox span') as HTMLElement;
-			
+			const checkbox = taskEl.querySelector(
+				".task-completion-checkbox span"
+			) as HTMLElement;
+
 			if (newCompletedStatus) {
 				taskEl.addClass("task-completed");
 				checkbox.addClass("task-checkbox-checked");
 				checkbox.removeClass("task-checkbox-unchecked");
 				checkbox.innerHTML = "✓";
 				checkbox.setAttribute("title", "Mark as incomplete");
+
+				// Add fade-out class for animation
+				taskEl.addClass("task-fade-out");
+
+				// Start fade-out process after 3 seconds
+				setTimeout(() => {
+					taskEl.addClass("fading");
+
+					// Remove task from list after fade animation completes
+					setTimeout(() => {
+						// Remove task from the tasks array
+						const taskIndex = this.tasks.indexOf(task);
+						if (taskIndex > -1) {
+							this.tasks.splice(taskIndex, 1);
+						}
+
+						// Remove the element from DOM
+						taskEl.remove();
+					}, 500); // Wait for fade transition to complete
+				}, 1000); // Wait 1 seconds before starting fade
 			} else {
 				taskEl.removeClass("task-completed");
+				taskEl.removeClass("task-fade-out");
+				taskEl.removeClass("fading");
 				checkbox.addClass("task-checkbox-unchecked");
 				checkbox.removeClass("task-checkbox-checked");
 				checkbox.innerHTML = "";
 				checkbox.setAttribute("title", "Mark as complete");
 			}
-			
 		} catch (error) {
 			new Notice(`Failed to update task: ${error.message}`);
-			console.error('Error updating task completion:', error);
+			console.error("Error updating task completion:", error);
 		}
 	}
 
@@ -476,14 +519,16 @@ class TaskPriorityView extends ItemView {
 	// Store scroll positions of all scrollable containers
 	storeScrollPositions(): Map<string, number> {
 		const scrollPositions = new Map<string, number>();
-		
+
 		// Store scroll positions for each priority section
-		const prioritySections = this.containerEl.querySelectorAll('.task-priority-items');
+		const prioritySections = this.containerEl.querySelectorAll(
+			".task-priority-items"
+		);
 		prioritySections.forEach((section, index) => {
 			const scrollableEl = section as HTMLElement;
 			scrollPositions.set(`section-${index}`, scrollableEl.scrollTop);
 		});
-		
+
 		return scrollPositions;
 	}
 
@@ -491,7 +536,9 @@ class TaskPriorityView extends ItemView {
 	restoreScrollPositions(scrollPositions: Map<string, number>): void {
 		// Use requestAnimationFrame to ensure DOM is updated
 		requestAnimationFrame(() => {
-			const prioritySections = this.containerEl.querySelectorAll('.task-priority-items');
+			const prioritySections = this.containerEl.querySelectorAll(
+				".task-priority-items"
+			);
 			prioritySections.forEach((section, index) => {
 				const scrollableEl = section as HTMLElement;
 				const savedPosition = scrollPositions.get(`section-${index}`);
@@ -503,13 +550,13 @@ class TaskPriorityView extends ItemView {
 	}
 
 	// Render view with optional scroll preservation
-	async renderView(preserveScroll: boolean = false): Promise<void> {
+	async renderView(preserveScroll = false): Promise<void> {
 		let scrollPositions: Map<string, number> | null = null;
-		
+
 		if (preserveScroll) {
 			scrollPositions = this.storeScrollPositions();
 		}
-		
+
 		const container = this.containerEl.children[1];
 		container.empty();
 
@@ -635,7 +682,7 @@ class TaskPriorityView extends ItemView {
 
 		// Set up drop zones for all sections
 		this.setupDropZones(taskList);
-		
+
 		// Restore scroll positions if requested
 		if (preserveScroll && scrollPositions) {
 			this.restoreScrollPositions(scrollPositions);

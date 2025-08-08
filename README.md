@@ -43,10 +43,39 @@ A plugin for Obsidian that helps you view, sort, and manage your tasks by priori
 -   Run `npm run dev` to start compilation in watch mode.
 -   Edit `claude/main.ts` and `claude/styles.css` as needed.
 
-## Releasing
+## 🚀 Releasing
 
--   Update `manifest.json` with your new version number and minimum Obsidian version.
--   Create a new GitHub release and upload `manifest.json`, `main.js`, and `styles.css`.
+Follow these steps to prepare and create a new release for your Obsidian plugin:
+
+1. **Update Version Information**
+   - Update `manifest.json` with your new version number and minimum Obsidian version.
+
+2. **Create a Git Tag**
+   - Use the following command in your local repository. Replace `v1.0.0` with your desired version number:
+     ```bash
+     git tag -a v1.0.0 -m "Release version 1.0.0"
+     ```
+   - Or, for a lightweight tag:
+     ```bash
+     git tag v1.0.0
+     ```
+
+3. **Push the Tag to GitHub**
+   - Push your new tag to trigger the GitHub Actions release workflow:
+     ```bash
+     git push origin v1.0.0
+     ```
+
+4. **Check the Draft Release**
+   - This will automatically start the release workflow.
+   - Once the workflow completes, a **draft release** will appear on your repository’s [Releases](../../releases) page with the tag you just pushed.
+   - The workflow uploads `manifest.json`, `main.js`, and `styles.css` as assets.
+   - Review the release and publish it when you’re ready!
+
+---
+
+**Note:**  
+Make sure your workflow file is present and correctly configured in `.github/workflows/`.
 
 ## API Documentation
 

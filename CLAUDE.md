@@ -34,23 +34,23 @@ The plugin follows Obsidian's standard plugin architecture:
 ### Build and Development
 ```bash
 # Install dependencies
-npm install
+yarn install
 
 # Development build with watch mode
-npm run dev
+yarn dev
 
 # Production build
-npm run build
+yarn build
 
 # Version management (updates manifest.json and versions.json)
-npm run version
+yarn version
 ```
 
 ### Build System
 - **Build Tool**: esbuild with TypeScript compilation
 - **Entry Points**: `claude/main.ts` and `claude/styles.css`
 - **Output**: Generates `main.js` and `styles.css` in root directory
-- **Watch Mode**: Available via `npm run dev` for development
+- **Watch Mode**: Available via `yarn dev` for development
 
 ## File Structure
 

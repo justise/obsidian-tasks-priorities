@@ -39,8 +39,8 @@ A plugin for Obsidian that helps you view, sort, and manage your tasks by priori
 ## Development
 
 -   Clone this repo or copy the files to your plugin folder.
--   Run `npm i` to install dependencies.
--   Run `npm run dev` to start compilation in watch mode.
+-   Run `yarn install` to install dependencies.
+-   Run `yarn dev` to start compilation in watch mode.
 -   Edit `claude/main.ts` and `claude/styles.css` as needed.
 
 ## 🚀 Releasing

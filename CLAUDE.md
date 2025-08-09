@@ -8,12 +8,22 @@ This is an Obsidian plugin called "Task Prioritizer" that provides Kanban-style 
 
 ## Architecture
 
-The plugin follows Obsidian's standard plugin architecture:
+The plugin follows a modular architecture with clear separation of concerns:
 
-- **Main Plugin Class** (`TaskPriorityPlugin`): Core plugin logic extending Obsidian's `Plugin` class
-- **Custom View Class** (`TaskPriorityView`): Custom view extending `ItemView` for the task priority interface  
-- **Settings Class** (`TaskPrioritySettingTab`): Configuration interface extending `PluginSettingTab`
-- **Task Management**: Uses Dataview API integration to query and manipulate tasks across vault files
+### Core Components
+- **Main Plugin Class** (`claude/TaskPriorityPlugin.ts`): Core plugin logic extending Obsidian's `Plugin` class
+- **Custom View Class** (`claude/TaskPriorityView.ts`): Custom view extending `ItemView` for the task priority interface  
+- **Settings Class** (`claude/TaskPrioritySettingTab.ts`): Configuration interface extending `PluginSettingTab`
+- **Type Definitions** (`claude/types.ts`): Centralized interfaces, enums, and utility functions
+
+### UI Components (Lit-based)
+- **TaskItemComponent** (`claude/components/TaskItem.ts`): Reusable task item web component with drag/drop support
+- **PrioritySectionComponent** (`claude/components/PrioritySection.ts`): Priority section container with drop zone functionality
+- **Storybook Integration**: Interactive component documentation and testing environment
+
+### Data Integration
+- **Dataview API Integration**: Safe access to Dataview plugin for task querying across vault files
+- **File Manipulation**: Direct markdown file updates for task priority and completion status
 
 ### Core Components
 
@@ -44,6 +54,12 @@ yarn build
 
 # Version management (updates manifest.json and versions.json)
 yarn version
+
+# Run Storybook for component development
+yarn storybook
+
+# Build static Storybook for deployment
+yarn build-storybook
 ```
 
 ### Build System
@@ -51,15 +67,33 @@ yarn version
 - **Entry Points**: `claude/main.ts` and `claude/styles.css`
 - **Output**: Generates `main.js` and `styles.css` in root directory
 - **Watch Mode**: Available via `yarn dev` for development
+- **Component Development**: Storybook provides isolated component development and testing
 
 ## File Structure
 
-- `claude/main.ts`: Main plugin source code
-- `claude/styles.css`: Plugin-specific CSS styles  
+### Core Plugin Files
+- `claude/main.ts`: Entry point that exports the main plugin class
+- `claude/TaskPriorityPlugin.ts`: Main plugin class with lifecycle and data management
+- `claude/TaskPriorityView.ts`: Custom Obsidian view for task priority interface
+- `claude/TaskPrioritySettingTab.ts`: Plugin settings configuration interface
+- `claude/types.ts`: TypeScript interfaces, enums, and utility functions
+- `claude/styles.css`: Plugin-specific CSS styles
+
+### UI Components (Lit Web Components)
+- `claude/components/TaskItem.ts`: Individual task item component
+- `claude/components/PrioritySection.ts`: Priority section container component
+- `claude/components/*.stories.ts`: Storybook stories for component documentation
+
+### Configuration & Build
 - `manifest.json`: Obsidian plugin manifest
-- `esbuild.config.mjs`: Build configuration
-- `tsconfig.json`: TypeScript configuration
-- Generated files: `main.js`, `styles.css` (auto-generated from claude/ folder)
+- `package.json`: Node.js dependencies and scripts
+- `esbuild.config.mjs`: Build configuration for plugin bundling
+- `tsconfig.json`: TypeScript configuration with decorator support
+- `.storybook/`: Storybook configuration for component development
+
+### Generated Files
+- `main.js`, `styles.css`: Auto-generated plugin bundle (from claude/ folder)
+- `yarn.lock`: Dependency lock file
 
 ## Key Interfaces and Types
 

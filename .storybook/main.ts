@@ -4,8 +4,6 @@ const config: StorybookConfig = {
   stories: ['../claude/**/*.stories.@(js|jsx|ts|tsx|mdx)'],
   addons: [
     '@storybook/addon-essentials',
-    '@storybook/addon-actions',
-    '@storybook/addon-controls',
   ],
   framework: {
     name: '@storybook/web-components-vite',
@@ -13,11 +11,7 @@ const config: StorybookConfig = {
   },
   typescript: {
     check: false,
-    reactDocgen: 'react-docgen-typescript',
-    reactDocgenTypescriptOptions: {
-      shouldExtractLiteralValuesFromEnum: true,
-      propFilter: (prop) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
-    },
+    reactDocgen: false,
   },
 };
 

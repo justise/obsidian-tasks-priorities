@@ -188,6 +188,9 @@ export class TaskPriorityView extends ItemView {
 
 						// Remove the element from DOM
 						taskEl.remove();
+						
+						// Re-render the view to update priority section headers with new counts
+						this.renderView(true); // Preserve scroll position during update
 					}, 500); // Wait for fade transition to complete
 				}, 1000); // Wait 1 seconds before starting fade
 			} else {

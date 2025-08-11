@@ -121,7 +121,7 @@ export class PrioritySectionComponent extends LitElement {
           ${this.tasks.map(task => html`
             <task-item
               .task="${task}"
-              .onToggleCompletion="${this.onTaskToggle}"
+              .onToggleCompletion="${this._handleTaskToggle}"
               .onFileClick="${this.onFileClick}"
             ></task-item>
           `)}
@@ -159,5 +159,24 @@ export class PrioritySectionComponent extends LitElement {
 
   private _handleHeaderDragStart(e: DragEvent) {
     e.dataTransfer?.setData('text/plain', this.priority);
+  }
+
+  private _handleTaskToggle = (task: TaskItem) => {
+    // Call the parent's toggle handler
+    if (this.onTaskToggle) {
+      this.onTaskToggle(task);
+    }
+    
+    // If the task was completed, remove it from our local tasks array after a delay
+    // to allow for animation to complete, then request an update
+    if (!task.completed) { // Task is being marked as complete
+      setTimeout(() => {
+        const taskIndex = this.tasks.findIndex(t => t === task);
+        if (taskIndex > -1) {
+          this.tasks = this.tasks.filter(t => t !== task);
+          this.requestUpdate(); // Trigger re-render to update count
+        }
+      }, 1500); // Match the animation timing from TaskPriorityView
+    }
   }
 }

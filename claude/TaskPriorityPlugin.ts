@@ -179,4 +179,15 @@ export default class TaskPriorityPlugin extends Plugin {
 			return lines.join("\n");
 		});
 	}
+
+	// Method to refresh the current view (called from settings)
+	refreshView(): void {
+		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_TASK_PRIORITY);
+		leaves.forEach(leaf => {
+			const view = leaf.view as TaskPriorityView;
+			if (view) {
+				view.refreshTasks();
+			}
+		});
+	}
 }

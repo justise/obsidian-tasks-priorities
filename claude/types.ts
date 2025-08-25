@@ -29,6 +29,8 @@ export interface TaskPriorityPluginSettings {
 	refreshInterval: number;
 	openFullPage: boolean;
 	taskQuery: string;
+	enableAnimations: boolean;
+	priorityOrder: "high-to-low" | "low-to-high";
 }
 
 export enum TaskPriority {
@@ -45,6 +47,8 @@ export const DEFAULT_SETTINGS: TaskPriorityPluginSettings = {
 	refreshInterval: 30,
 	openFullPage: true,
 	taskQuery: "TASK WHERE !completed AND !checked",
+	enableAnimations: false,
+	priorityOrder: "high-to-low",
 };
 
 export const getTaskPriority = (line: string): TaskPriority => {

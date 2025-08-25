@@ -42,6 +42,18 @@ export class TaskPriorityView extends ItemView {
 				this.refreshTasks();
 			}, this.plugin.settings.refreshInterval * 1000);
 		}
+
+		// Add focus event listener to refresh when view becomes active
+		this.leaf.on('active-leaf-change', () => {
+			if (this.leaf === this.app.workspace.activeLeaf) {
+				this.refreshTasks();
+			}
+		});
+
+		// Also listen for when the view container gets focus
+		this.containerEl.addEventListener('focusin', () => {
+			this.refreshTasks();
+		});
 	}
 
 	async onClose() {
@@ -440,7 +452,12 @@ export class TaskPriorityView extends ItemView {
 		const columnWrapper = taskList.createEl("div", {
 			cls: "task-priority-columns",
 		});
-		const columnOrder = ["High", "Medium", "Normal", "Low", "Lowest"];
+		
+		// Determine column order based on settings
+		const columnOrder = this.plugin.settings.priorityOrder === "high-to-low" 
+			? ["High", "Medium", "Normal", "Low", "Lowest"]
+			: ["Lowest", "Low", "Normal", "Medium", "High"];
+			
 		columnOrder.forEach((priority) => {
 			const section = columnWrapper.createEl("div", {
 				cls: `task-priority-section task-priority-section-${priority.toLowerCase()}`,

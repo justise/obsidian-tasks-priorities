@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
-import { html } from 'lit';
+import { html, css, LitElement } from 'lit';
+import { property, customElement } from 'lit/decorators.js';
 import { fn } from '@storybook/test';
 import './TaskItem';
 import type { TaskItem } from '../types';
@@ -335,6 +336,154 @@ export const InteractivePlayground: Story = {
     docs: {
       description: {
         story: 'Interactive playground - use the controls below to modify the task properties and see live changes.'
+      }
+    }
+  }
+};
+
+export const ClickableCheckboxDemo: Story = {
+  render: () => {
+    // Create a stateful wrapper component for the demo
+    class InteractiveDemo extends LitElement {
+      @property({ type: Object })
+      taskState: TaskItem = {...sampleTasks.development};
+
+      @property({ type: Boolean })
+      processing = false;
+
+      @property({ type: Boolean })
+      enableAnimations = true;
+
+      static styles = css`
+        :host {
+          display: block;
+        }
+        .demo-container {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          max-width: 500px;
+        }
+        .demo-title {
+          margin: 0;
+          color: var(--text-normal, #333);
+        }
+        .demo-description {
+          margin: 0;
+          color: var(--text-muted, #666);
+          font-size: 14px;
+        }
+        .demo-controls {
+          display: flex;
+          gap: 16px;
+          align-items: center;
+          margin-bottom: 16px;
+          padding: 12px;
+          background: var(--background-secondary, #f5f5f5);
+          border-radius: 6px;
+        }
+        .demo-controls label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          cursor: pointer;
+        }
+      `;
+
+      handleToggleCompletion = (task: TaskItem) => {
+        // Start processing animation
+        this.processing = true;
+        this.requestUpdate();
+        
+        // Simulate processing delay
+        setTimeout(() => {
+          // Toggle completion state
+          this.taskState = {...this.taskState, completed: !this.taskState.completed};
+          this.processing = false;
+          
+          // Apply fade-out animation
+          const taskElement = this.shadowRoot?.querySelector('task-item');
+          const taskItem = taskElement?.shadowRoot?.querySelector('.task-priority-item');
+          
+          if (taskItem) {
+            taskItem.classList.add('task-fade-out');
+            
+            // After fade-out completes, update the task and fade back in
+            setTimeout(() => {
+              // Remove fade-out class to restore visibility
+              taskItem.classList.remove('task-fade-out');
+              
+              // Request update to show the new state
+              this.requestUpdate();
+              
+              // Optionally restore back to uncompleted after a delay for demo purposes
+              setTimeout(() => {
+                this.taskState = {...this.taskState, completed: false};
+                this.requestUpdate();
+              }, 2000);
+            }, 500); // Match the fadeOut animation duration
+          } else {
+            // Fallback if no animation element found
+            this.requestUpdate();
+            setTimeout(() => {
+              this.taskState = {...this.taskState, completed: false};
+              this.requestUpdate();
+            }, 2000);
+          }
+        }, 800); // Show spinner for 800ms
+      };
+
+      handleFileClick = (task: TaskItem) => {
+        console.log('File clicked:', task.file?.path);
+      };
+
+      render() {
+        return html`
+          <div class="demo-container">
+            <h3 class="demo-title">Clickable Checkbox Demo</h3>
+            <p class="demo-description">
+              Click the checkbox to see the completion behavior. Toggle animations to see the fireworks effect.
+            </p>
+            
+            <div class="demo-controls">
+              <label>
+                <input 
+                  type="checkbox" 
+                  .checked=${this.enableAnimations}
+                  @change=${(e: Event) => {
+                    this.enableAnimations = (e.target as HTMLInputElement).checked;
+                    this.requestUpdate();
+                  }}
+                />
+                Enable Fireworks Animations 🎆
+              </label>
+            </div>
+            
+            <task-item
+              .task=${this.taskState}
+              .draggable=${false}
+              .processing=${this.processing}
+              .enableAnimations=${this.enableAnimations}
+              .onToggleCompletion=${this.handleToggleCompletion}
+              .onFileClick=${this.handleFileClick}
+            ></task-item>
+          </div>
+        `;
+      }
+    }
+
+    // Register the custom element if not already registered
+    if (!customElements.get('interactive-demo')) {
+      customElements.define('interactive-demo', InteractiveDemo);
+    }
+
+    return html`<interactive-demo></interactive-demo>`;
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Interactive demo showing checkbox clicking behavior with spinner animation, animated checkmark, fade-out effect, and automatic state restoration for testing purposes.'
       }
     }
   }

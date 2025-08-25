@@ -78,5 +78,40 @@ export class TaskPrioritySettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+
+		new Setting(containerEl)
+			.setName("Priority Column Order")
+			.setDesc("Order of priority columns from left to right")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("high-to-low", "High to Low (Highest → Lowest)")
+					.addOption("low-to-high", "Low to High (Lowest → Highest)")
+					.setValue(this.plugin.settings.priorityOrder)
+					.onChange(async (value: "high-to-low" | "low-to-high") => {
+						this.plugin.settings.priorityOrder = value;
+						await this.plugin.saveSettings();
+						// Trigger view refresh to apply new order
+						this.plugin.refreshView();
+					})
+			);
+
+		// Experimental section
+		containerEl.createEl("h3", { text: "Experimental Features" });
+		containerEl.createEl("p", { 
+			text: "⚠️ These features are experimental and may cause performance issues or unexpected behavior.",
+			cls: "setting-item-description"
+		});
+
+		new Setting(containerEl)
+			.setName("Enable Task Animations")
+			.setDesc("🧪 EXPERIMENTAL: Enable fireworks animations when completing tasks. May impact performance.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.enableAnimations)
+					.onChange(async (value) => {
+						this.plugin.settings.enableAnimations = value;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }

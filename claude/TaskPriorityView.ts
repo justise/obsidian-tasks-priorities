@@ -44,8 +44,8 @@ export class TaskPriorityView extends ItemView {
 		}
 
 		// Add focus event listener to refresh when view becomes active
-		this.leaf.on('active-leaf-change', () => {
-			if (this.leaf === this.app.workspace.activeLeaf) {
+		this.app.workspace.on('active-leaf-change', (leaf) => {
+			if (leaf === this.leaf) {
 				this.refreshTasks();
 			}
 		});

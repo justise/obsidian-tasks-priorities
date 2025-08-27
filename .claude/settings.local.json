@@ -11,7 +11,9 @@
       "Bash(yarn storybook:*)",
       "Bash(ls:*)",
       "Bash(grep:*)",
-      "Bash(yarn build-storybook)"
+      "Bash(yarn build-storybook)",
+      "Bash(yarn test)",
+      "Bash(yarn test:*)"
     ],
     "deny": []
   }

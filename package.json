@@ -1,6 +1,6 @@
 {
 	"name": "tasks-prioritizer",
-	"version": "1.0.6",
+	"version": "1.0.8",
 	"description": "Kanban style prioritization of tasks in Obsidian with Drag and Drop support.",
 	"main": "main.js",
 	"scripts": {
@@ -9,7 +9,8 @@
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"deploy": "node deploy.js",
 		"storybook": "storybook dev -p 6006",
-		"build-storybook": "storybook build"
+		"build-storybook": "storybook build",
+		"test": "jest"
 	},
 	"keywords": [
 		"Tasks",
@@ -24,6 +25,7 @@
 		"@storybook/test": "^8.4.0",
 		"@storybook/web-components": "^8.4.0",
 		"@storybook/web-components-vite": "^8.4.0",
+		"@types/jest": "^30.0.0",
 		"@types/node": "^18.19.0",
 		"@typescript-eslint/eslint-plugin": "^8.0.0",
 		"@typescript-eslint/parser": "^8.0.0",
@@ -32,9 +34,11 @@
 		"esbuild": "^0.25.8",
 		"esbuild-plugin-copy": "^2.1.1",
 		"eslint": "^9.0.0",
+		"jest": "^30.1.1",
 		"lit": "^3.0.0",
 		"obsidian": "latest",
 		"storybook": "^8.4.0",
+		"ts-jest": "^29.4.1",
 		"tslib": "^2.7.0",
 		"typescript": "^5.6.0",
 		"vite": "^5.0.0"

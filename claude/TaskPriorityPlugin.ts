@@ -169,11 +169,11 @@ export default class TaskPriorityPlugin extends Plugin {
 
 			// Update the task completion status
 			if (completed) {
-				// Mark as completed: change [ ] to [x]
-				lines[task.line] = currentLine.replace(/- \[ \]/, "- [x]");
+				// Mark as completed: change [ ] to [x] (supports bullets and numbered lists)
+				lines[task.line] = currentLine.replace(/^(\s*(?:[-*+]|\d+\.)\s+)\[ \]/, "$1[x]");
 			} else {
-				// Mark as incomplete: change [x] to [ ]
-				lines[task.line] = currentLine.replace(/- \[x\]/, "- [ ]");
+				// Mark as incomplete: change [x] or [X] to [ ] (supports bullets and numbered lists)
+				lines[task.line] = currentLine.replace(/^(\s*(?:[-*+]|\d+\.)\s+)\[[xX]\]/, "$1[ ]");
 			}
 
 			return lines.join("\n");

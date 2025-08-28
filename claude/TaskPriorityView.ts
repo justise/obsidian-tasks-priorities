@@ -8,6 +8,7 @@ import {
 import {
 	TaskItem,
 	VIEW_TYPE_TASK_PRIORITY,
+	getCleanTaskTitle,
 } from "./types";
 import TaskPriorityPlugin from "./TaskPriorityPlugin";
 
@@ -119,7 +120,7 @@ export class TaskPriorityView extends ItemView {
 
 		// Title with file info
 		const titleEl = taskContent.createEl("div", { cls: "task-title" });
-		titleEl.setText(task.text);
+		titleEl.setText(getCleanTaskTitle(task.text));
 
 		// File info
 		const fileInfo = taskContent.createEl("div", { cls: "task-file-info" });
@@ -507,7 +508,7 @@ export class TaskPriorityView extends ItemView {
 				);
 				break;
 			case "text":
-				this.tasks.sort((a, b) => a.text.localeCompare(b.text));
+				this.tasks.sort((a, b) => getCleanTaskTitle(a.text).localeCompare(getCleanTaskTitle(b.text)));
 				break;
 		}
 

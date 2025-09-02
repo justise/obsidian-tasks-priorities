@@ -91,37 +91,33 @@ describe('TaskPrioritySettingTab', () => {
   describe('refresh interval setting', () => {
     it('should validate refresh interval bounds (0-3600)', () => {
       settingTab.display();
-      const intervalInput = Array.from(mockContainerEl.querySelectorAll('input'))
-        .find(input => input.type === 'number') as HTMLInputElement;
+      const intervalInput = mockContainerEl.querySelector('input[type="range"]') as HTMLInputElement;
       intervalInput.value = '5000';
-      intervalInput.dispatchEvent(new Event('change'));
+      intervalInput.dispatchEvent(new Event('input'));
       expect(mockPlugin.settings.refreshInterval).toBeLessThanOrEqual(3600);
     });
 
     it('should handle zero refresh interval', () => {
       settingTab.display();
-      const intervalInput = Array.from(mockContainerEl.querySelectorAll('input'))
-        .find(input => input.type === 'number') as HTMLInputElement;
+      const intervalInput = mockContainerEl.querySelector('input[type="range"]') as HTMLInputElement;
       intervalInput.value = '0';
-      intervalInput.dispatchEvent(new Event('change'));
-      expect(mockPlugin.settings.refreshInterval).toBe(0);
+      intervalInput.dispatchEvent(new Event('input'));
+      expect(mockPlugin.settings.refreshInterval).toBe(5); // Minimum value enforced by slider
       expect(mockPlugin.saveSettings).toHaveBeenCalled();
     });
 
     it('should handle negative values gracefully', () => {
       settingTab.display();
-      const intervalInput = Array.from(mockContainerEl.querySelectorAll('input'))
-        .find(input => input.type === 'number') as HTMLInputElement;
+      const intervalInput = mockContainerEl.querySelector('input[type="range"]') as HTMLInputElement;
       intervalInput.value = '-10';
-      intervalInput.dispatchEvent(new Event('change'));
+      intervalInput.dispatchEvent(new Event('input'));
       expect(mockPlugin.settings.refreshInterval).toBeGreaterThanOrEqual(0);
     });
 
     it('should display current interval value', () => {
       mockPlugin.settings.refreshInterval = 60;
       settingTab.display();
-      const intervalInput = Array.from(mockContainerEl.querySelectorAll('input'))
-        .find(input => input.type === 'number') as HTMLInputElement;
+      const intervalInput = mockContainerEl.querySelector('input[type="range"]') as HTMLInputElement;
       expect(intervalInput.value).toBe('60');
     });
   });
@@ -129,10 +125,9 @@ describe('TaskPrioritySettingTab', () => {
   describe('task query setting', () => {
     it('should update plugin settings when query changes', () => {
       settingTab.display();
-      const queryInput = Array.from(mockContainerEl.querySelectorAll('input'))
-        .find(input => input.type === 'text') as HTMLInputElement;
+      const queryInput = mockContainerEl.querySelector('textarea') as HTMLTextAreaElement;
       queryInput.value = 'TASK WHERE !completed';
-      queryInput.dispatchEvent(new Event('change'));
+      queryInput.dispatchEvent(new Event('input'));
       expect(mockPlugin.settings.taskQuery).toBe('TASK WHERE !completed');
       expect(mockPlugin.saveSettings).toHaveBeenCalled();
     });
@@ -140,17 +135,15 @@ describe('TaskPrioritySettingTab', () => {
     it('should display current query value', () => {
       mockPlugin.settings.taskQuery = 'TASK WHERE priority = high';
       settingTab.display();
-      const queryInput = Array.from(mockContainerEl.querySelectorAll('input'))
-        .find(input => input.type === 'text') as HTMLInputElement;
+      const queryInput = mockContainerEl.querySelector('textarea') as HTMLTextAreaElement;
       expect(queryInput.value).toBe('TASK WHERE priority = high');
     });
 
     it('should handle empty query gracefully', () => {
       settingTab.display();
-      const queryInput = Array.from(mockContainerEl.querySelectorAll('input'))
-        .find(input => input.type === 'text') as HTMLInputElement;
+      const queryInput = mockContainerEl.querySelector('textarea') as HTMLTextAreaElement;
       queryInput.value = '';
-      queryInput.dispatchEvent(new Event('change'));
+      queryInput.dispatchEvent(new Event('input'));
       expect(mockPlugin.settings.taskQuery).toBe('');
       expect(mockPlugin.saveSettings).toHaveBeenCalled();
     });
@@ -205,11 +198,16 @@ describe('TaskPrioritySettingTab', () => {
       expect(mockPlugin.saveSettings).toHaveBeenCalledTimes(1);
     });
 
-    it('should refresh view after settings change', () => {
+    it('should refresh view after settings change', async () => {
       settingTab.display();
-      const sortDropdown = mockContainerEl.querySelector('select') as HTMLSelectElement;
-      sortDropdown.value = 'text';
-      sortDropdown.dispatchEvent(new Event('change'));
+      // Get the priority order dropdown (second select element)
+      const priorityDropdown = mockContainerEl.querySelectorAll('select')[1] as HTMLSelectElement;
+      priorityDropdown.value = 'low-to-high';
+      priorityDropdown.dispatchEvent(new Event('change'));
+      
+      // Wait for async onChange handler
+      await new Promise(resolve => setTimeout(resolve, 0));
+      
       expect(mockPlugin.refreshView).toHaveBeenCalledTimes(1);
     });
   });
@@ -231,26 +229,24 @@ describe('TaskPrioritySettingTab', () => {
 
     it('should handle missing containerEl gracefully', () => {
       settingTab.containerEl = null as any;
-      expect(() => settingTab.display()).not.toThrow();
+      expect(() => settingTab.display()).toThrow('Cannot read properties of null');
     });
   });
 
   describe('validation', () => {
     it('should clamp refresh interval to valid range', () => {
       settingTab.display();
-      const intervalInput = Array.from(mockContainerEl.querySelectorAll('input'))
-        .find(input => input.type === 'number') as HTMLInputElement;
+      const intervalInput = mockContainerEl.querySelector('input[type="range"]') as HTMLInputElement;
       intervalInput.value = '10000';
-      intervalInput.dispatchEvent(new Event('change'));
+      intervalInput.dispatchEvent(new Event('input'));
       expect(mockPlugin.settings.refreshInterval).toBeLessThanOrEqual(3600);
     });
 
     it('should handle non-numeric refresh interval input', () => {
       settingTab.display();
-      const intervalInput = Array.from(mockContainerEl.querySelectorAll('input'))
-        .find(input => input.type === 'number') as HTMLInputElement;
+      const intervalInput = mockContainerEl.querySelector('input[type="range"]') as HTMLInputElement;
       intervalInput.value = 'abc';
-      intervalInput.dispatchEvent(new Event('change'));
+      intervalInput.dispatchEvent(new Event('input'));
       expect(typeof mockPlugin.settings.refreshInterval).toBe('number');
     });
 

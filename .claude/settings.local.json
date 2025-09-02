@@ -13,7 +13,8 @@
       "Bash(grep:*)",
       "Bash(yarn build-storybook)",
       "Bash(yarn test)",
-      "Bash(yarn test:*)"
+      "Bash(yarn test:*)",
+      "Bash(yarn list:*)"
     ],
     "deny": []
   }

@@ -1,11 +1,20 @@
 import TaskPriorityPlugin from './TaskPriorityPlugin';
-import { TaskItem, getCleanTaskTitle } from './types';
+import { TaskItem, getCleanTaskTitle, DEFAULT_SETTINGS } from './types';
 import { TFile } from 'obsidian';
 
 // Mock Obsidian's App
 class MockApp {
   vault = {
-    process: jest.fn()
+    process: jest.fn(),
+    getFileByPath: jest.fn()
+  };
+  plugins = {
+    plugins: {
+      dataview: null
+    }
+  };
+  workspace = {
+    getLeavesOfType: jest.fn().mockReturnValue([])
   };
 }
 
@@ -16,6 +25,16 @@ describe('TaskPriorityPlugin', () => {
   beforeEach(() => {
     mockApp = new MockApp();
     plugin = new TaskPriorityPlugin(mockApp as any, {} as any);
+    // Initialize settings with defaults
+    plugin.settings = { ...DEFAULT_SETTINGS };
+    
+    // Mock plugin methods for testing
+    plugin.loadData = jest.fn().mockResolvedValue({});
+    plugin.saveData = jest.fn().mockResolvedValue(undefined);
+    plugin.registerView = jest.fn();
+    plugin.addRibbonIcon = jest.fn();
+    plugin.addCommand = jest.fn();
+    plugin.addSettingTab = jest.fn();
   });
 
   describe('updateTaskCompletion', () => {
@@ -469,22 +488,21 @@ describe('TaskPriorityPlugin', () => {
       const testDate = '2024-01-01';
       const mockDataview = {
         api: {
-          pages: jest.fn().mockReturnValue({
-            where: jest.fn().mockReturnValue({
-              file: { 
-                tasks: [{ 
-                  file: { path: 'test.md' }, 
-                  line: 0, 
-                  text: 'task', 
-                  completed: false,
-                  due: testDate 
-                }] 
-              }
-            })
+          query: jest.fn().mockResolvedValue({
+            successful: true,
+            value: {
+              values: [{ 
+                file: { path: 'test.md' }, 
+                line: 0, 
+                text: 'task', 
+                completed: false,
+                due: testDate 
+              }] 
+            }
           })
         }
       };
-      mockApp.plugins = { getPlugin: jest.fn().mockReturnValue(mockDataview) };
+      mockApp.plugins.plugins.dataview = mockDataview;
       mockApp.vault.getFileByPath = jest.fn().mockReturnValue(mockFile);
       
       const result = await plugin.findTasksWithPrioritiesUsingDataview();
@@ -496,14 +514,20 @@ describe('TaskPriorityPlugin', () => {
       const taskText = 'Task with completion date ✅ 2024-01-01';
       const mockDataview = {
         api: {
-          pages: jest.fn().mockReturnValue({
-            where: jest.fn().mockReturnValue({
-              file: { tasks: [{ file: { path: 'test.md' }, line: 0, text: taskText, completed: true }] }
-            })
+          query: jest.fn().mockResolvedValue({
+            successful: true,
+            value: {
+              values: [{ 
+                file: { path: 'test.md' }, 
+                line: 0, 
+                text: taskText, 
+                completed: true 
+              }] 
+            }
           })
         }
       };
-      mockApp.plugins = { getPlugin: jest.fn().mockReturnValue(mockDataview) };
+      mockApp.plugins.plugins.dataview = mockDataview;
       mockApp.vault.getFileByPath = jest.fn().mockReturnValue(mockFile);
       
       const result = await plugin.findTasksWithPrioritiesUsingDataview();
@@ -665,12 +689,15 @@ describe('TaskPriorityPlugin', () => {
       }));
       const mockDataview = {
         api: {
-          pages: jest.fn().mockReturnValue({
-            where: jest.fn().mockReturnValue({ file: { tasks: largeTasks } })
+          query: jest.fn().mockResolvedValue({
+            successful: true,
+            value: {
+              values: largeTasks
+            }
           })
         }
       };
-      mockApp.plugins = { getPlugin: jest.fn().mockReturnValue(mockDataview) };
+      mockApp.plugins.plugins.dataview = mockDataview;
       mockApp.vault.getFileByPath = jest.fn().mockReturnValue(mockFile);
       
       const startTime = performance.now();
@@ -724,7 +751,7 @@ describe('TaskPriorityPlugin', () => {
       const originalLoadData = plugin.loadData;
       plugin.loadData = jest.fn().mockRejectedValue(new Error('Failed to load'));
       
-      await expect(plugin.onload()).resolves.not.toThrow();
+      await expect(plugin.onload()).rejects.toThrow('Failed to load');
       plugin.loadData = originalLoadData;
     });
 

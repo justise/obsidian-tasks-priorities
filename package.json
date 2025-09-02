@@ -35,6 +35,7 @@
 		"esbuild-plugin-copy": "^2.1.1",
 		"eslint": "^9.0.0",
 		"jest": "^30.1.1",
+		"jest-environment-jsdom": "^30.1.2",
 		"lit": "^3.0.0",
 		"obsidian": "latest",
 		"storybook": "^8.4.0",

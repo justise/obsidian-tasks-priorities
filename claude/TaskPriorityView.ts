@@ -8,6 +8,7 @@ import {
 import {
 	TaskItem,
 	VIEW_TYPE_TASK_PRIORITY,
+	getCleanTaskTitle,
 } from "./types";
 import TaskPriorityPlugin from "./TaskPriorityPlugin";
 
@@ -18,6 +19,7 @@ export class TaskPriorityView extends ItemView {
 	draggedItem: HTMLElement | null = null;
 	refreshInterval: number | null = null;
 	sortBy: "date" | "file" | "text" = "date";
+	windowFocusHandler: (() => void) | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: TaskPriorityPlugin) {
 		super(leaf);
@@ -44,8 +46,8 @@ export class TaskPriorityView extends ItemView {
 		}
 
 		// Add focus event listener to refresh when view becomes active
-		this.leaf.on('active-leaf-change', () => {
-			if (this.leaf === this.app.workspace.activeLeaf) {
+		this.app.workspace.on('active-leaf-change', (leaf) => {
+			if (leaf === this.leaf) {
 				this.refreshTasks();
 			}
 		});
@@ -54,11 +56,26 @@ export class TaskPriorityView extends ItemView {
 		this.containerEl.addEventListener('focusin', () => {
 			this.refreshTasks();
 		});
+
+		// Listen for when the window regains focus (e.g., switching back from another app)
+		this.windowFocusHandler = () => {
+			// Only refresh if this view is currently active
+			if (this.leaf === this.app.workspace.activeLeaf) {
+				this.refreshTasks();
+			}
+		};
+		window.addEventListener('focus', this.windowFocusHandler);
 	}
 
 	async onClose() {
 		if (this.refreshInterval) {
 			clearInterval(this.refreshInterval);
+		}
+		
+		// Clean up window focus event listener
+		if (this.windowFocusHandler) {
+			window.removeEventListener('focus', this.windowFocusHandler);
+			this.windowFocusHandler = null;
 		}
 	}
 
@@ -119,7 +136,7 @@ export class TaskPriorityView extends ItemView {
 
 		// Title with file info
 		const titleEl = taskContent.createEl("div", { cls: "task-title" });
-		titleEl.setText(task.text);
+		titleEl.setText(getCleanTaskTitle(task.text));
 
 		// File info
 		const fileInfo = taskContent.createEl("div", { cls: "task-file-info" });
@@ -507,7 +524,7 @@ export class TaskPriorityView extends ItemView {
 				);
 				break;
 			case "text":
-				this.tasks.sort((a, b) => a.text.localeCompare(b.text));
+				this.tasks.sort((a, b) => getCleanTaskTitle(a.text).localeCompare(getCleanTaskTitle(b.text)));
 				break;
 		}
 

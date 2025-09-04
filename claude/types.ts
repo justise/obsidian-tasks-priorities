@@ -52,6 +52,8 @@ export const DEFAULT_SETTINGS: TaskPriorityPluginSettings = {
 };
 
 export const getTaskPriority = (line: string): TaskPriority => {
+	// Handle null/undefined input gracefully
+	if (!line) return TaskPriority.Normal;
 	if (line.includes("🔺")) return TaskPriority.Highest;
 	if (line.includes("⏫")) return TaskPriority.High;
 	if (line.includes("🔼")) return TaskPriority.Medium;
@@ -88,4 +90,16 @@ export const setTaskPriorityInLine = (line: string, priority: string): string =>
 	return emoji
 		? `${cleanedLine} ${emoji}`.replace(/\s{2,}/g, " ").trim()
 		: cleanedLine.trim();
+};
+
+/**
+ * Clean task text for display by removing checkbox notation and bullet/number prefixes.
+ * @param taskText The raw task text from markdown
+ * @returns Clean task text suitable for display in the UI
+ */
+export const getCleanTaskTitle = (taskText: string): string => {
+	// Handle null/undefined input gracefully
+	if (!taskText) return '';
+	// Remove bullet points, numbered lists, checkboxes, and leading whitespace
+	return taskText.replace(/^[\s]*(?:[-*+]|\d+\.)\s*\[\s*[xX]?\s*\]\s*/, '').trim();
 };

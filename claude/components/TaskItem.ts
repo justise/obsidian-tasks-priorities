@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import type { TaskItem as TaskItemType } from '../types';
+import { getCleanTaskTitle } from '../types';
 
 @customElement('task-item')
 export class TaskItemComponent extends LitElement {
@@ -372,7 +373,7 @@ export class TaskItemComponent extends LitElement {
         </div>
 
         <div class="task-content">
-          <div class="task-title">${this.task.text}</div>
+          <div class="task-title">${getCleanTaskTitle(this.task.text)}</div>
           <div 
             class="task-file-info"
             @click="${this._handleFileClick}"

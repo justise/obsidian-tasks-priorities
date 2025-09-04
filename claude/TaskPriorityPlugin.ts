@@ -169,11 +169,12 @@ export default class TaskPriorityPlugin extends Plugin {
 
 			// Update the task completion status
 			if (completed) {
-				// Mark as completed: change [ ] to [x]
-				lines[task.line] = currentLine.replace(/- \[ \]/, "- [x]");
+				// Mark as completed: change [ ] to [x] and add completion date
+				const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+				lines[task.line] = currentLine.replace(/^(\s*(?:[-*+]|\d+\.)\s+)\[ \](.*)$/, `$1[x]$2 ✅ ${today}`);
 			} else {
-				// Mark as incomplete: change [x] to [ ]
-				lines[task.line] = currentLine.replace(/- \[x\]/, "- [ ]");
+				// Mark as incomplete: change [x] or [X] to [ ] and remove completion date
+				lines[task.line] = currentLine.replace(/^(\s*(?:[-*+]|\d+\.)\s+)\[[xX]\](.*?)\s*✅\s*\d{4}-\d{2}-\d{2}\s*$/, "$1[ ]$2");
 			}
 
 			return lines.join("\n");

@@ -1,6 +1,6 @@
 {
 	"name": "tasks-prioritizer",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "Kanban style prioritization of tasks in Obsidian with Drag and Drop support.",
 	"main": "main.js",
 	"scripts": {

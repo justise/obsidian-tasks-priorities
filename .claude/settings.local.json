@@ -14,7 +14,8 @@
       "Bash(yarn build-storybook)",
       "Bash(yarn test)",
       "Bash(yarn test:*)",
-      "Bash(yarn list:*)"
+      "Bash(yarn list:*)",
+      "Bash(npm test)"
     ],
     "deny": []
   }

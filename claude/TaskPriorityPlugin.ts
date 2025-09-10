@@ -92,8 +92,8 @@ export default class TaskPriorityPlugin extends Plugin {
 
 	async findTasksWithPrioritiesUsingDataview(): Promise<TaskItem[]> {
 		// Safe access to Dataview plugin API
-		const dataviewPlugin = (this.app as any).plugins?.plugins?.dataview;
-		const dataviewApi = dataviewPlugin?.api;
+		const dataviewPlugin = this.app.plugins.getPlugin('dataview');
+		const dataviewApi = dataviewPlugin && 'api' in dataviewPlugin ? dataviewPlugin.api : null;
 		
 		if (!dataviewApi) {
 			new Notice(
@@ -107,6 +107,7 @@ export default class TaskPriorityPlugin extends Plugin {
 			const results = await dataviewApi.query(query);
 			if (results.successful) {
 				return results.value.values
+					.filter((item: DataviewTaskItem) => item && item.file && item.file.path && item.text)
 					.map((item: DataviewTaskItem) => {
 						const tfile = this.app.vault.getFileByPath(item.file.path);
 						return {

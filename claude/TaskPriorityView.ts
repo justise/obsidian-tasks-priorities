@@ -119,7 +119,7 @@ export class TaskPriorityView extends ItemView {
 				: "task-checkbox-unchecked",
 		});
 
-		checkboxIcon.innerHTML = task.completed ? "✓" : "";
+		checkboxIcon.setText(task.completed ? "✓" : "");
 		checkboxIcon.setAttribute(
 			"title",
 			task.completed ? "Mark as incomplete" : "Mark as complete"
@@ -197,7 +197,7 @@ export class TaskPriorityView extends ItemView {
 				taskEl.addClass("task-completed");
 				checkbox.addClass("task-checkbox-checked");
 				checkbox.removeClass("task-checkbox-unchecked");
-				checkbox.innerHTML = "✓";
+				checkbox.setText("✓");
 				checkbox.setAttribute("title", "Mark as incomplete");
 
 				// Add fade-out class for animation
@@ -228,7 +228,7 @@ export class TaskPriorityView extends ItemView {
 				taskEl.removeClass("fading");
 				checkbox.addClass("task-checkbox-unchecked");
 				checkbox.removeClass("task-checkbox-checked");
-				checkbox.innerHTML = "";
+				checkbox.setText("");
 				checkbox.setAttribute("title", "Mark as complete");
 			}
 		} catch (error) {

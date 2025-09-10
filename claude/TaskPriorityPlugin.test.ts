@@ -11,7 +11,8 @@ class MockApp {
   plugins = {
     plugins: {
       dataview: null
-    }
+    },
+    getPlugin: jest.fn()
   };
   workspace = {
     getLeavesOfType: jest.fn().mockReturnValue([])
@@ -442,25 +443,28 @@ describe('TaskPriorityPlugin', () => {
 
   describe('task parsing and data flow', () => {
     it('should handle Dataview query failures gracefully', async () => {
-      const mockDataview = { api: { pages: jest.fn().mockReturnValue({ error: 'Query failed' }) } };
-      (global as any).app = { plugins: { getPlugin: jest.fn().mockReturnValue(mockDataview) } };
-      mockApp.plugins = { getPlugin: jest.fn().mockReturnValue(mockDataview) };
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const mockDataview = { api: { query: jest.fn().mockResolvedValue({ successful: false, error: 'Query failed' }) } };
+      mockApp.plugins.getPlugin = jest.fn().mockReturnValue(mockDataview);
       
       const result = await plugin.findTasksWithPrioritiesUsingDataview();
       expect(result).toEqual([]);
+      
+      consoleSpy.mockRestore();
     });
 
     it('should filter out tasks from non-existent files', async () => {
       const mockDataview = {
         api: {
-          pages: jest.fn().mockReturnValue({
-            where: jest.fn().mockReturnValue({
-              file: { tasks: [{ file: { path: 'nonexistent.md' }, line: 0, text: 'task', completed: false }] }
-            })
+          query: jest.fn().mockResolvedValue({
+            successful: true,
+            value: {
+              values: [{ file: { path: 'nonexistent.md' }, line: 0, text: 'task', completed: false }]
+            }
           })
         }
       };
-      mockApp.plugins = { getPlugin: jest.fn().mockReturnValue(mockDataview) };
+      mockApp.plugins.getPlugin = jest.fn().mockReturnValue(mockDataview);
       mockApp.vault.getFileByPath = jest.fn().mockReturnValue(null);
       
       const result = await plugin.findTasksWithPrioritiesUsingDataview();
@@ -470,14 +474,15 @@ describe('TaskPriorityPlugin', () => {
     it('should handle malformed task data from Dataview', async () => {
       const mockDataview = {
         api: {
-          pages: jest.fn().mockReturnValue({
-            where: jest.fn().mockReturnValue({
-              file: { tasks: [{ file: null, line: null, text: null, completed: null }] }
-            })
+          query: jest.fn().mockResolvedValue({
+            successful: true,
+            value: {
+              values: [{ file: null, line: null, text: null, completed: null }]
+            }
           })
         }
       };
-      mockApp.plugins = { getPlugin: jest.fn().mockReturnValue(mockDataview) };
+      mockApp.plugins.getPlugin = jest.fn().mockReturnValue(mockDataview);
       
       const result = await plugin.findTasksWithPrioritiesUsingDataview();
       expect(result).toEqual([]);
@@ -502,7 +507,7 @@ describe('TaskPriorityPlugin', () => {
           })
         }
       };
-      mockApp.plugins.plugins.dataview = mockDataview;
+      mockApp.plugins.getPlugin = jest.fn().mockReturnValue(mockDataview);
       mockApp.vault.getFileByPath = jest.fn().mockReturnValue(mockFile);
       
       const result = await plugin.findTasksWithPrioritiesUsingDataview();
@@ -527,7 +532,7 @@ describe('TaskPriorityPlugin', () => {
           })
         }
       };
-      mockApp.plugins.plugins.dataview = mockDataview;
+      mockApp.plugins.getPlugin = jest.fn().mockReturnValue(mockDataview);
       mockApp.vault.getFileByPath = jest.fn().mockReturnValue(mockFile);
       
       const result = await plugin.findTasksWithPrioritiesUsingDataview();
@@ -697,7 +702,7 @@ describe('TaskPriorityPlugin', () => {
           })
         }
       };
-      mockApp.plugins.plugins.dataview = mockDataview;
+      mockApp.plugins.getPlugin = jest.fn().mockReturnValue(mockDataview);
       mockApp.vault.getFileByPath = jest.fn().mockReturnValue(mockFile);
       
       const startTime = performance.now();

@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import type { TaskItem } from '../types';
+import type { TaskItem, TaskDragData } from '../types';
 
 @customElement('priority-section')
 export class PrioritySectionComponent extends LitElement {
@@ -14,7 +14,7 @@ export class PrioritySectionComponent extends LitElement {
   allowDrop = true;
 
   @property({ type: Function })
-  onTaskDrop?: (priority: string, taskData: any) => void;
+  onTaskDrop?: (priority: string, taskData: TaskDragData) => void;
 
   @property({ type: Function })
   onTaskToggle?: (task: TaskItem) => void;

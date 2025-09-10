@@ -68,8 +68,7 @@ export class TaskPrioritySettingTab extends PluginSettingTab {
 				"Dataview query to find tasks (e.g. TASK WHERE !completed AND !checked)"
 			)
 			.addTextArea((text) => {
-				text.inputEl.style.minHeight = "150px";
-				text.inputEl.style.minWidth = "300px";
+				text.inputEl.addClass("task-priority-settings-textarea");
 				return text
 					.setValue(this.plugin.settings.taskQuery)
 					.setPlaceholder("TASK WHERE !completed AND !checked")

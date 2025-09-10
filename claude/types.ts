@@ -14,6 +14,14 @@ export interface TaskItem {
 	date?: Date;
 }
 
+// Interface for task drag and drop data
+export interface TaskDragData {
+	priority: string;
+	file?: string;
+	line: number;
+	taskIndex?: number;
+}
+
 // Interface for Dataview query result items
 export interface DataviewTaskItem {
 	file: { path: string };

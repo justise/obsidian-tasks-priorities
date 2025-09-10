@@ -80,3 +80,4 @@ Make sure your workflow file is present and correctly configured in `.github/wor
 ## API Documentation
 
 There is no exposed API for this plugin.
+

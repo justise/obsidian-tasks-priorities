@@ -262,3 +262,9 @@
 	border-radius: 8px;
 	min-width: 180px;
 }
+
+/* Settings styles */
+.task-priority-settings-textarea {
+	min-height: 150px !important;
+	min-width: 300px !important;
+}
